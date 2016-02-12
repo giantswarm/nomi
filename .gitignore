@@ -1,0 +1,7 @@
+bin/
+.gobuild
+*.swp
+gopath
+bin-dist/
+bindata.go
+fleemmer
