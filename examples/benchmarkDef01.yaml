@@ -1,0 +1,10 @@
+instancegroup-size: 1
+instructions:
+  - start:
+     max: 100
+     interval: 100
+  - float:
+     rate: 2.0
+     duration: 100
+  - sleep: 60
+  - stop: stop-all

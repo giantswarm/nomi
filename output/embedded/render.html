@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+
+  <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.7.0/nv.d3.min.css" rel="stylesheet">
+  <link href="http://getbootstrap.com/examples/justified-nav/justified-nav.css" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+  <style>
+    #chart svg {
+      height: 600px;
+      width: 1200px;
+    }
+
+    path.line {
+      fill: none;
+      stroke: #666;
+      stroke-width: 1.5px;
+    }
+
+    line.line-running-count,
+    path.line-running-count {
+      fill: none;
+      stroke: blue;
+      stroke-width: 1px;
+    }
+
+    line.line-starting-count,
+    path.line-starting-count {
+      fill: none;
+      stroke: red;
+      stroke-width: 1px;
+    }
+
+    line.fleet-cpu-usage,
+    path.fleet-cpu-usage {
+      fill: none;
+      stroke: orange;
+      opacity: 0.40;
+      stroke-width: 1px;
+    }
+
+
+    line.systemd-cpu-usage,
+    path.systemd-cpu-usage {
+      fill: none;
+      stroke: magenta;
+      opacity: 0.30;
+      stroke-width: 1px;
+    }
+
+    path.area {
+      fill: #e7e7e7;
+    }
+
+    .axis {
+      shape-rendering: crispEdges;
+    }
+
+    .x.axis line {
+      stroke: #ccc;
+    }
+
+    .y.axis line {
+      stroke: #ccc;
+    }
+
+    .y.axis.left text {
+      fill: green;
+    }
+
+    .y.axis.left path {
+      stroke: green;
+    }
+
+    .y.axis.nogrid line {
+      stroke: none;
+    }
+
+    .delaypoint {
+      opacity: 0.7;
+      fill: green;
+    }
+
+    div.tooltip {
+      position: absolute;
+      text-align: left;
+      padding: 2px;
+      font: 12px sans-serif;
+      background: #ddd;
+      border: 0px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    body {
+      background-color: #eeeeee;
+    }
+
+    .timeline-focus {
+      fill: orange;
+      stroke: none;
+      opacity: 0.3;
+    }
+
+    span.event-text {
+      margin: 0.5em;
+      background-color: #ddd;
+    }
+
+    .legend {
+      font: 12px sans-serif;
+      box-shadow: 2px 2px 1px #888;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="content" class="jumbotron">
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" charset="utf-8"></script>
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+
+  <script type="text/javascript">
+  </script>
+
+
+
+</body>
+
+</html>

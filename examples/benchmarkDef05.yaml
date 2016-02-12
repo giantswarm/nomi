@@ -1,0 +1,21 @@
+instancegroup-size: 1
+instructions:
+   - start:
+     max: 1
+     interval: 200
+   - float:
+      rate: 1.0
+      duration: 110
+   - expect-running:
+      symbol: <
+      amount: 10
+   - sleep: 100
+   - stop: stop-all
+   - start:
+      max: 3
+      interval: 300
+   - float:
+      rate: 3.0
+      duration: 310
+   - sleep: 200
+   - stop: stop-all
