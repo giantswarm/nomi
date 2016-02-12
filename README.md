@@ -56,8 +56,8 @@ instructions:
 ## Fleemmer parameters
 
 - **addr**: address to listen.
-- **dump-html**: dump JSON stats to stdout.
-- **dump-tar**: dump tarred HTML stats to stdout.
+- **dump-json**: dump JSON stats to stdout.
+- **dump-html-tar**: dump tarred HTML stats to stdout.
 - **benchmark-file**: YAML file with the actions to be triggered and the size of the instance groups.
 - **raw-instructions**: benchmark raw instructions to be triggered, (requires `instancegroup-size` parameter) and the size of the instance groups.
 - **instancegroup-size**: size of the instance group in terms of units, (only if you use `raw-instructions`).
