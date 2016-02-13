@@ -1,3 +1,4 @@
+// This main package contains the main logic of operations for fleemmer
 package main
 
 import (

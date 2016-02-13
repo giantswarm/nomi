@@ -1,7 +1,10 @@
+// This output package contains all the operations to render the metrics collected
+// during the benchmark
 package output
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"bitbucket.org/binet/go-gnuplot/pkg/gnuplot"
@@ -10,14 +13,23 @@ import (
 	"github.com/giantswarm/fleemmer/unit"
 )
 
+// Directory where the plots are stored by default
 const plotsDIR = "/fleemmer_plots"
 
 var processTypes = []string{"fleetd", "systemd"}
 
+// GeneratePlots creates some initial plots from the collected metrics. Three
+// are the initial plots: start operation completion time/delay, stop operation
+// completion time/delay and cluster metrics for systemd and fleetd.
 func GeneratePlots(stats unit.Stats) {
 	fname := ""
 	persist := true
 	debug := false
+	plotsDirectory := plotsDIR
+
+	if os.Getenv("PLOTS_DIR") != "" {
+		plotsDirectory = os.Getenv("PLOTS_DIR")
+	}
 
 	for _, process := range processTypes {
 		p, err := gnuplot.NewPlotter(fname, persist, debug)
@@ -43,7 +55,7 @@ func GeneratePlots(stats unit.Stats) {
 		p.CheckedCmd("set terminal pdf")
 
 		glog.V(2).Infof("Generating plot %s", process)
-		p.CheckedCmd(fmt.Sprintf("set output '%s/%s.pdf'", plotsDIR, process))
+		p.CheckedCmd(fmt.Sprintf("set output '%s/%s.pdf'", plotsDirectory, process))
 		p.CheckedCmd("replot")
 
 		time.Sleep(2)
@@ -74,7 +86,7 @@ func GeneratePlots(stats unit.Stats) {
 		p.SetYLabel("Delay time")
 		p.CheckedCmd("set terminal pdf")
 
-		p.CheckedCmd(fmt.Sprintf("set output '%s/units_start.pdf'", plotsDIR))
+		p.CheckedCmd(fmt.Sprintf("set output '%s/units_start.pdf'", plotsDirectory))
 		p.CheckedCmd("replot")
 
 		time.Sleep(2)
@@ -98,7 +110,7 @@ func GeneratePlots(stats unit.Stats) {
 		p.SetYLabel("Delay time")
 		p.SetXLabel("Completion time")
 		p.CheckedCmd("set terminal pdf")
-		p.CheckedCmd(fmt.Sprintf("set output '%s/units_stop.pdf'", plotsDIR))
+		p.CheckedCmd(fmt.Sprintf("set output '%s/units_stop.pdf'", plotsDirectory))
 
 		for _, stats := range stats.Stop {
 			valuesX = append(valuesX, stats.CompletionTime)

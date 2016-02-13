@@ -1,3 +1,5 @@
+// This unit package implements the logic of the benchmark execution, as well
+// as it process the defined instructions in the appropiate order
 package unit
 
 import (
@@ -88,10 +90,13 @@ func NewEngine(def definition.BenchmarkDef) (*UnitEngine, error) {
 	}, nil
 }
 
+// InstanceGroupSize returns the size specified for the instance groups used in
+// the benchmark
 func (e *UnitEngine) InstanceGroupSize() int {
 	return e.benchmark.InstanceGroupSize
 }
 
+// Run computes the benchmark definition in the order specified by the user
 func (e *UnitEngine) Run() {
 	defer e.stopAll()
 	var (
@@ -132,6 +137,7 @@ func (e *UnitEngine) Run() {
 	}
 }
 
+// MarkUnitRunning collects the timestamps of the start operation for an unit
 func (e *UnitEngine) MarkUnitRunning(id string) time.Duration {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -147,6 +153,7 @@ func (e *UnitEngine) MarkUnitRunning(id string) time.Duration {
 	return state.actualStartTime.Sub(state.startRequestTime)
 }
 
+// MarkUnitStopped collects the timestamps of the stop operation for an unit
 func (e *UnitEngine) MarkUnitStopped(id string) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -169,6 +176,7 @@ type Stats struct {
 	MachineStats map[string][]processStatsLine
 }
 
+// Stats returns all the collected metrics
 func (e *UnitEngine) Stats() Stats {
 	return Stats{
 		Start:        e.startedStats,
@@ -178,6 +186,7 @@ func (e *UnitEngine) Stats() Stats {
 	}
 }
 
+// DumpProcessStats dumps the machine stats for the process systemd and fleetd
 func (e *UnitEngine) DumpProcessStats(statsid, hostname string, cpuusage float64, rss int) {
 	statsLine := processStatsLine{
 		Process:   statsid,

@@ -1,3 +1,4 @@
+// This unit package generates all the require unit files
 package unit
 
 import (
@@ -8,6 +9,7 @@ import (
 
 const beaconUnitPrefix = "beaconX"
 
+// MakeStatsDumper creates fleemer specific units to collect metrics in each host
 func MakeStatsDumper(name, cmd, statsEndpoint, listenAddr string) schema.Unit {
 	return schema.Unit{
 		Name: beaconUnitPrefix + "-stats-dumper-" + name + ".service",
@@ -26,6 +28,7 @@ func MakeStatsDumper(name, cmd, statsEndpoint, listenAddr string) schema.Unit {
 	}
 }
 
+// MakeUnitChain creates the unit files of the benchmark units.
 func MakeUnitChain(id, listenAddr string, chainLength int) []schema.Unit {
 	unitsList := []schema.Unit{}
 

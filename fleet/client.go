@@ -1,3 +1,5 @@
+// This fleet package implements all the operation to communicate with a fleet
+// cluster
 package fleet
 
 import (
@@ -11,6 +13,7 @@ import (
 	"github.com/coreos/fleet/schema"
 )
 
+// fleetAPI represents all the operations we want to perform to a fleet API
 type fleetAPI interface {
 	StartUnit(unit schema.Unit) error
 	StartUnitGroup(unit []schema.Unit) error
@@ -26,10 +29,12 @@ type fleetClient struct {
 	m   *sync.Mutex
 }
 
+// ListUnits returns the list of units in the fleet cluster
 func (f *fleetClient) ListUnits() ([]*schema.Unit, error) {
 	return f.api.Units()
 }
 
+// StartUnitGroup starts an instance group by passing as input argument the instance group
 func (f *fleetClient) StartUnitGroup(units []schema.Unit) error {
 	f.m.Lock()
 	defer f.m.Unlock()
@@ -54,6 +59,7 @@ func (f *fleetClient) StartUnitGroup(units []schema.Unit) error {
 	return nil
 }
 
+// StartUnit starts a specific unit in the cluster
 func (f *fleetClient) StartUnit(unit schema.Unit) error {
 	f.m.Lock()
 	defer f.m.Unlock()
@@ -75,6 +81,7 @@ func (f *fleetClient) StartUnit(unit schema.Unit) error {
 	return nil
 }
 
+// CleanupPrefix destroys all units with a specific prefix
 func (f *fleetClient) CleanupPrefix(prefix string) error {
 	f.m.Lock()
 	defer f.m.Unlock()
@@ -92,18 +99,21 @@ func (f *fleetClient) CleanupPrefix(prefix string) error {
 	return nil
 }
 
+// Stop stops an unit by passing its unit name
 func (f *fleetClient) Stop(unitName string) error {
 	f.m.Lock()
 	defer f.m.Unlock()
 	return f.api.SetUnitTargetState(unitName, "loaded")
 }
 
+// Unload unloads an unit by passing its unit name
 func (f *fleetClient) Unload(unitName string) error {
 	f.m.Lock()
 	defer f.m.Unlock()
 	return f.api.SetUnitTargetState(unitName, "inactive")
 }
 
+// Destroy destroys an unit by passing its unit name
 func (f *fleetClient) Destroy(unitName string) error {
 	f.m.Lock()
 	defer f.m.Unlock()
