@@ -48,7 +48,6 @@ deps:
 	@GOPATH=$(GOPATH) go get github.com/golang/glog
 	@GOPATH=$(GOPATH) go get github.com/gorilla/mux
 	@GOPATH=$(GOPATH) go get gopkg.in/yaml.v2
-	@GOPATH=$(GOPATH) go get bitbucket.org/binet/go-gnuplot/pkg/gnuplot
 	@GOPATH=$(GOPATH) go get github.com/ajstarks/svgo
 	@GOPATH=$(GOPATH) go get github.com/eapache/queue
 	@GOPATH=$(GOPATH) go get github.com/dustin/go-humanize

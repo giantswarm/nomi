@@ -56,7 +56,7 @@ instructions:
 
 ## Fleemmer parameters
 
-- **addr**: address to listen.
+- **addr**: address to listen. Fleemmer extracts the public CoreOS IP of the host machine(/etc/environment). Note that, you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen. The `default` port to listen is `40302`.
 - **dump-json**: dump JSON stats to stdout.
 - **dump-html-tar**: dump tarred HTML stats to stdout.
 - **benchmark-file**: YAML file with the actions to be triggered and the size of the instance groups.
@@ -69,17 +69,17 @@ instructions:
 
 Using a benchmark YAML file to run a test:
 
-`./fleemmer -addr=100.25.10.2:54541 -v=12 -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml" &>> outputFile `
+`./fleemmer -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml" &>> outputFile `
 
 Using `raw-instructions` and `instancegroup-size` parameters to run a benchmark:
 
-`./fleemmer -addr=192.68.10.102:54541 -v=12 -instancegroup-size=1 -dump-json -raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
+`./fleemmer -instancegroup-size=1 -dump-json -raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
 
 Example of a script to send Fleemmer to a remote fleet cluster-node:
 
 ```
 scp fleemmer core@100.25.10.2:
-ssh core@100.25.10.2 './fleemmer -addr=100.25.10.2:54541 -v=12 -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml"'
+ssh core@100.25.10.2 './fleemmer -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml"'
 ```
 
 If you want to generate the plots with `gnuplot` in a specific directory `$PLOTS_DIR` use the Docker build:
@@ -93,7 +93,7 @@ docker run -ti \
  -v /var/run/fleet.sock:/var/run/fleet.sock \
  --net=host \
  --pid=host \
- giantswarm/fleemmer \
+ giantswarm/fleemmer:latest \
  -addr=192.68.10.101:54541 \
  -generate-gnuplots \
  -raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"

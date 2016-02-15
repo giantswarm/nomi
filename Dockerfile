@@ -6,6 +6,6 @@ RUN mkdir -p /fleemmer_plots
 RUN apt-get update && apt-get install -y gnuplot
 
 # fleemmer
-COPY ./bin/fleemmer /usr/local/bin/
+COPY ./fleemmer /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/fleemmer"]

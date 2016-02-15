@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"bitbucket.org/binet/go-gnuplot/pkg/gnuplot"
 	"github.com/golang/glog"
 
+	"github.com/giantswarm/fleemmer/output/gnuplot"
 	"github.com/giantswarm/fleemmer/unit"
 )
 
@@ -31,6 +31,22 @@ func GeneratePlots(stats unit.Stats) {
 		plotsDirectory = os.Getenv("PLOTS_DIR")
 	}
 
+	gnuplot.Initialize()
+
+	generateDelayStartPlot(fname, persist, debug, plotsDirectory, stats)
+
+	// Start delay
+	if len(stats.Start) > 0 {
+		generateUnitsStopPlot(fname, persist, debug, plotsDirectory, stats)
+	}
+
+	// Stop delay
+	if len(stats.Stop) > 0 {
+		generateUnitsStopPlot(fname, persist, debug, plotsDirectory, stats)
+	}
+}
+
+func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirectory string, stats unit.Stats) {
 	for _, process := range processTypes {
 		p, err := gnuplot.NewPlotter(fname, persist, debug)
 		if err != nil {
@@ -62,64 +78,62 @@ func GeneratePlots(stats unit.Stats) {
 		p.CheckedCmd("q")
 
 	}
+}
 
-	// Start delay
-	if len(stats.Start) > 0 {
-		p, err := gnuplot.NewPlotter(fname, persist, debug)
-		if err != nil {
-			err_string := fmt.Sprintf("** err: %v\n", err)
-			panic(err_string)
-		}
-		defer p.Close()
-
-		valuesX := make([]float64, 0)
-		valuesY := make([]float64, 0)
-		p.CheckedCmd("set grid x")
-		p.CheckedCmd("set grid y")
-		p.SetStyle("impulses")
-		for _, stats := range stats.Start {
-			valuesX = append(valuesX, stats.CompletionTime)
-			valuesY = append(valuesY, stats.Delay)
-		}
-		p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds")
-		p.SetXLabel("Completion time")
-		p.SetYLabel("Delay time")
-		p.CheckedCmd("set terminal pdf")
-
-		p.CheckedCmd(fmt.Sprintf("set output '%s/units_start.pdf'", plotsDirectory))
-		p.CheckedCmd("replot")
-
-		time.Sleep(2)
-		p.CheckedCmd("q")
+func generateUnitsStartPlot(fname string, persist bool, debug bool, plotsDirectory string, stats unit.Stats) {
+	p, err := gnuplot.NewPlotter(fname, persist, debug)
+	if err != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err)
+		panic(err_string)
 	}
+	defer p.Close()
 
-	// Stop delay
-	if len(stats.Stop) > 0 {
-		p, err := gnuplot.NewPlotter(fname, persist, debug)
-		if err != nil {
-			err_string := fmt.Sprintf("** err: %v\n", err)
-			panic(err_string)
-		}
-		defer p.Close()
-
-		valuesX := make([]float64, 0)
-		valuesY := make([]float64, 0)
-		p.CheckedCmd("set grid x")
-		p.CheckedCmd("set grid y")
-		p.SetStyle("impulses")
-		p.SetYLabel("Delay time")
-		p.SetXLabel("Completion time")
-		p.CheckedCmd("set terminal pdf")
-		p.CheckedCmd(fmt.Sprintf("set output '%s/units_stop.pdf'", plotsDirectory))
-
-		for _, stats := range stats.Stop {
-			valuesX = append(valuesX, stats.CompletionTime)
-			valuesY = append(valuesY, stats.Delay)
-		}
-		p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds")
-		p.CheckedCmd("replot")
-
-		time.Sleep(2)
-		p.CheckedCmd("q")
+	valuesX := make([]float64, 0)
+	valuesY := make([]float64, 0)
+	p.CheckedCmd("set grid x")
+	p.CheckedCmd("set grid y")
+	p.SetStyle("impulses")
+	for _, stats := range stats.Start {
+		valuesX = append(valuesX, stats.CompletionTime)
+		valuesY = append(valuesY, stats.Delay)
 	}
+	p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds")
+	p.SetXLabel("Completion time")
+	p.SetYLabel("Delay time")
+	p.CheckedCmd("set terminal pdf")
+
+	p.CheckedCmd(fmt.Sprintf("set output '%s/units_start.pdf'", plotsDirectory))
+	p.CheckedCmd("replot")
+
+	time.Sleep(2)
+	p.CheckedCmd("q")
+}
+
+func generateUnitsStopPlot(fname string, persist bool, debug bool, plotsDirectory string, stats unit.Stats) {
+	p, err := gnuplot.NewPlotter(fname, persist, debug)
+	if err != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err)
+		panic(err_string)
+	}
+	defer p.Close()
+
+	valuesX := make([]float64, 0)
+	valuesY := make([]float64, 0)
+	p.CheckedCmd("set grid x")
+	p.CheckedCmd("set grid y")
+	p.SetStyle("impulses")
+	p.SetYLabel("Delay time")
+	p.SetXLabel("Completion time")
+	p.CheckedCmd("set terminal pdf")
+	p.CheckedCmd(fmt.Sprintf("set output '%s/units_stop.pdf'", plotsDirectory))
+
+	for _, stats := range stats.Stop {
+		valuesX = append(valuesX, stats.CompletionTime)
+		valuesY = append(valuesY, stats.Delay)
+	}
+	p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds")
+	p.CheckedCmd("replot")
+
+	time.Sleep(2)
+	p.CheckedCmd("q")
 }

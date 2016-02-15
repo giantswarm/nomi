@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	listenAddr      = flag.String("addr", "127.0.0.1:40302", "address to listen")
+	listenAddr      = flag.String("addr", "", "address to listen")
 	benchmarkFile   = flag.String("benchmark-file", "", "file with the benchmark definition (instance group size, instructions to spawn/stop/float units)")
 	rawInstructions = flag.String("raw-instructions", "", "instructions to spawn/stop/float units")
 	dumpJSONFlag    = flag.Bool("dump-json", false, "dump json stats to stdout")
@@ -27,13 +27,14 @@ var (
 	igSize          = flag.Int("instancegroup-size", 1, "instance group size")
 )
 
-const beaconUnitPrefix = "beaconX"
+const (
+	beaconUnitPrefix = "beaconX"
+
+	listenerDefaultIP   = "127.0.0.1"
+	listenerDefaultPort = "40302"
+)
 
 func checkArgsSanity() {
-	if *listenAddr == "" {
-		glog.Fatalln("a non-empty address is required")
-	}
-
 	if *dumpJSONFlag && *dumpHTMLTarFlag {
 		glog.Fatalln("dump option is required. Please, choose between:  dump-json OR dump-html-tar")
 	}
@@ -58,6 +59,16 @@ func checkArgsSanity() {
 		if _, err := exec.LookPath("gnuplot"); err != nil {
 			glog.V(2).Infof("generate-gnuplots: could not find path to 'gnuplot':\n%v\n", err)
 			glog.Fatalln("generate-gnuplots option requires 'gnuplot' software installed")
+		}
+	}
+
+	if *listenAddr == "" {
+		// We extract the public CoreOS ip of the host machine
+		ip, err := fleet.CoreosHostPublicIP()
+		if ip == "" || err != nil {
+			*listenAddr = listenerDefaultIP + ":" + listenerDefaultPort
+		} else {
+			*listenAddr = ip + ":" + listenerDefaultPort
 		}
 	}
 }
@@ -130,10 +141,6 @@ func main() {
 	}
 	wg.Wait()
 
-	if *generatePlots {
-		output.GeneratePlots(unitEngine.Stats())
-	}
-
 	if *dumpJSONFlag {
 		output.DumpJSON(unitEngine.Stats())
 	}
@@ -150,6 +157,10 @@ func main() {
 		}
 
 		output.DumpHTMLTar(html, scriptJs, unitEngine.Stats())
+	}
+
+	if *generatePlots {
+		output.GeneratePlots(unitEngine.Stats())
 	}
 
 	output.PrintHistogram(unitEngine.Stats(), os.Stderr)
