@@ -37,7 +37,7 @@ func GeneratePlots(stats unit.Stats) {
 
 	// Start delay
 	if len(stats.Start) > 0 {
-		generateUnitsStopPlot(fname, persist, debug, plotsDirectory, stats)
+		generateUnitsStartPlot(fname, persist, debug, plotsDirectory, stats)
 	}
 
 	// Stop delay
