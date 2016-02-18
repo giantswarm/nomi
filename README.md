@@ -4,7 +4,7 @@
 [![](https://godoc.org/github.com/giantswarm/fleemmer?status.svg)](http://godoc.org/github.com/giantswarm/fleemmer)
 [![IRC Channel](https://img.shields.io/badge/irc-%23giantswarm-blue.svg)](https://kiwiirc.com/client/irc.freenode.net/#giantswarm)
 
-**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster, fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, your just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. Fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ Fleemmer requires to be installed on a fleet cluster-node to run properly.
 Dependencies:
 
 - fleet and systemd running on the host machine.
-- Optional: To generate gnu plots, it is required to have support for gnuplot in the host machine. Otherwise you could run Fleemmer as a docker container to have gnuplot installed, as shown below.
+- Optional: To generate gnu plots, support for gnuplot is required on the host machine. Alternatively, you can run Fleemmer as a Docker container, which comes with gnuplot installed, as shown below.
 
 ## Benchmark file definition
 
