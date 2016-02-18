@@ -56,7 +56,7 @@ instructions:
 
 ## Fleemmer parameters
 
-- **addr**: address to listen. Fleemmer extracts the public CoreOS IP of the host machine(/etc/environment). Note that, you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen. The `default` port to listen is `40302`.
+- **addr**: address to listen on. Fleemmer extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
 - **dump-json**: dump JSON stats to stdout.
 - **dump-html-tar**: dump tarred HTML stats to stdout.
 - **benchmark-file**: YAML file with the actions to be triggered and the size of the instance groups.
