@@ -1,3 +1,5 @@
+// This definition package implements the transformation of a YAML definition
+// to a fleemmer benchmark
 package definition
 
 import (
@@ -54,6 +56,8 @@ type BenchmarkDef struct {
 	InstanceGroupSize int `yaml:"instancegroup-size"`
 }
 
+// BenchmarkDefByFile procudes a benchmark definition out of a YAML file
+// Return a benchmark definition object and error
 func BenchmarkDefByFile(filePath string) (BenchmarkDef, error) {
 	def, err := parseBenchmarkDef(filePath)
 	if err != nil {
@@ -62,6 +66,9 @@ func BenchmarkDefByFile(filePath string) (BenchmarkDef, error) {
 	return def, err
 }
 
+// BenchmarkDefByRawInstructions creates a benchmark definition using raw
+// instructions and instance group size
+// Return a benchmark definition and error
 func BenchmarkDefByRawInstructions(instructions string, igSize int) (BenchmarkDef, error) {
 	re := regexp.MustCompile(`\(([^\)]+)\)`)
 	parsed := re.FindAllStringSubmatch(instructions, -1)

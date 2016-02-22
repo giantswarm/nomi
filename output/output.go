@@ -15,11 +15,14 @@ import (
 	"github.com/giantswarm/fleemmer/unit"
 )
 
+// DumpJSON prints the metrics of the benchmark in a JSON format
 func DumpJSON(stats unit.Stats) {
 	enc := json.NewEncoder(os.Stdout)
 	enc.Encode(stats)
 }
 
+// DumpJSON dumps the stats metrics to a javascript file 'data.js' which should
+// be used by embedded scripts to print a graphic.
 func DumpHTMLTar(html []byte, scriptJs []byte, stats unit.Stats) {
 	jsonData := bytes.NewBufferString("var allData = ")
 	enc := json.NewEncoder(jsonData)
@@ -58,7 +61,7 @@ func DumpHTMLTar(html []byte, scriptJs []byte, stats unit.Stats) {
 
 }
 
-// Print the units delay to start
+// PrintHistogram prints in stdout the units delay for the start operation
 func PrintHistogram(stats unit.Stats, out io.Writer) {
 	delays := []float64{}
 	for _, ev := range stats.Start {

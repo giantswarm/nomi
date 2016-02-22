@@ -4,7 +4,7 @@
 [![](https://godoc.org/github.com/giantswarm/fleemmer?status.svg)](http://godoc.org/github.com/giantswarm/fleemmer)
 [![IRC Channel](https://img.shields.io/badge/irc-%23giantswarm-blue.svg)](https://kiwiirc.com/client/irc.freenode.net/#giantswarm)
 
-**Fleemmer** is a benchmarking tool that stresstests a [fleet](https://github.com/coreos/fleet) cluster and is able to collect some metrics. To make use of Fleemmer, your just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. Fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
 
 ## Requirements
 
@@ -13,6 +13,7 @@ Fleemmer requires to be installed on a fleet cluster-node to run properly.
 Dependencies:
 
 - fleet and systemd running on the host machine.
+- Optional: To generate gnu plots, support for gnuplot is required on the host machine. Alternatively, you can run Fleemmer as a Docker container, which comes with gnuplot installed, as shown below.
 
 ## Benchmark file definition
 
@@ -55,7 +56,7 @@ instructions:
 
 ## Fleemmer parameters
 
-- **addr**: address to listen.
+- **addr**: address to listen on. Fleemmer extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
 - **dump-json**: dump JSON stats to stdout.
 - **dump-html-tar**: dump tarred HTML stats to stdout.
 - **benchmark-file**: YAML file with the actions to be triggered and the size of the instance groups.
@@ -68,23 +69,34 @@ instructions:
 
 Using a benchmark YAML file to run a test:
 
-`./fleemmer -addr=100.25.10.2:54541 -v=12 -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml" &>> outputFile `
+`./fleemmer -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml" &>> outputFile `
 
 Using `raw-instructions` and `instancegroup-size` parameters to run a benchmark:
 
-`./fleemmer -addr=192.68.10.102:54541 -v=12 -instancegroup-size=1 -dump-json -raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
+`./fleemmer -instancegroup-size=1 -dump-json -raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
 
 Example of a script to send Fleemmer to a remote fleet cluster-node:
 
 ```
 scp fleemmer core@100.25.10.2:
-ssh core@100.25.10.2 './fleemmer -addr=100.25.10.2:54541 -v=12 -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml"'
+ssh core@100.25.10.2 './fleemmer -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml"'
 ```
 
 If you want to generate the plots with `gnuplot` in a specific directory `$PLOTS_DIR` use the Docker build:
 
 ```
-docker run -ti -v $PLOTS_DIR:/fleemmer_plots -v /var/run/fleet.sock:/var/run/fleet.sock --net=host --pid=host hectorj2f/fleemmer -addr=192.68.10.101:54541 -v=12 -dump-json -raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
+PLOTS_DIR=/tmp
+...
+
+docker run -ti \
+ -v $PLOTS_DIR:/fleemmer_plots \
+ -v /var/run/fleet.sock:/var/run/fleet.sock \
+ --net=host \
+ --pid=host \
+ giantswarm/fleemmer:latest \
+ -addr=192.68.10.101:54541 \
+ -generate-gnuplots \
+ -raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
 ```
 
 ## Contact
