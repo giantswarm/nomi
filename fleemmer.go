@@ -25,6 +25,7 @@ var (
 	dumpHTMLTarFlag = flag.Bool("dump-html-tar", false, "dump tarred html stats to stdout")
 	generatePlots   = flag.Bool("generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/fleemmer_plots)")
 	igSize          = flag.Int("instancegroup-size", 1, "instance group size")
+	showVersion     = flag.Bool("version", false, "show the version of fleemmer")
 )
 
 const (
@@ -78,6 +79,11 @@ func main() {
 	log.SetPrefix("fleemmer: ")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
+
+	if *showVersion {
+		printVersion()
+		os.Exit(0)
+	}
 
 	checkArgsSanity()
 	fleetPool := fleet.NewFleetPool(20)
