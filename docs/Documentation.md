@@ -71,7 +71,7 @@ We can either dump the whole metrics as a JSON to stdout, or dump the output int
 The JSON output follows the next format:
 
 - Start: contains all timestamps and calculated delays of the start operation for each unit.
-- Start: contains all timestamps and calculated delays of the start operation for each unit.
+- Stop: contains all timestamps and calculated delays of the stop operation for each unit.
 - EventLog: prints the benchmark instructions that have been launched.
 - MachineStates: contains all the data points with the CPU usage for systemd and fleet daemons for each one of the nodes in the fleet cluster.
 
