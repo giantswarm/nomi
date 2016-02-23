@@ -1,7 +1,9 @@
 PROJECT=fleemmer
+ORGANIZATION=giantswarm
 
 BUILD_PATH := $(shell pwd)/.gobuild
-GS_PATH := $(BUILD_PATH)/src/github.com/giantswarm
+PROJECT_PATH := $(BUILD_PATH)/src/github.com/$(ORGANIZATION)
+IMPORT_PATH := github.com/$(ORGANIZATION)/$(PROJECT)
 
 BIN := $(PROJECT)
 
@@ -21,7 +23,7 @@ all: get-deps $(BIN)
 ci: clean all test
 
 clean:
-		rm -rf $(BUILD_PATH) $(BIN)
+		rm -rf $(BUILD_PATH) $(BIN) output/gobindata.go
 
 install: $(BIN)
 	cp fleemmer /usr/local/bin/
@@ -36,12 +38,13 @@ deps:
 	GOPATH=$(GOPATH) GOBIN=$(GOPATH)/bin go get github.com/jteeuwen/go-bindata/...
 
 .gobuild:
-	@mkdir -p $(GS_PATH)
-	@rm -f $(GS_PATH)/$(PROJECT) && cd "$(GS_PATH)" && ln -s ../../../.. $(PROJECT)
+	@mkdir -p $(PROJECT_PATH)
+	@rm -f $(PROJECT_PATH)/$(PROJECT) && cd "$(PROJECT_PATH)" && ln -s ../../../.. $(PROJECT)
 	#
 	# Fetch public dependencies via `go get`
 	# All of the dependencies are listed here
 	@GOPATH=$(GOPATH) go get github.com/jteeuwen/go-bindata/...
+	@GOPATH=$(GOPATH) go get github.com/spf13/cobra
 	@GOPATH=$(GOPATH) go get github.com/aybabtme/uniplot/histogram
 	@GOPATH=$(GOPATH) go get github.com/coreos/fleet/client
 	@GOPATH=$(GOPATH) go get github.com/coreos/fleet/schema
@@ -54,9 +57,9 @@ deps:
 	@GOPATH=$(GOPATH) go get gopkg.in/check.v1
 
 	# Fetch public dependencies via `go get`
-	GOPATH=$(GOPATH) go get -d -v github.com/giantswarm/$(PROJECT)
+	GOPATH=$(GOPATH) go get -d -v $(IMPORT_PATH)
 
-$(BIN): $(SOURCE) VERSION gobindata.go
+$(BIN): $(SOURCE) VERSION output/gobindata.go
 		echo Building for $(GOOS)/$(GOARCH)
 		docker run \
 		    --rm \
@@ -66,11 +69,11 @@ $(BIN): $(SOURCE) VERSION gobindata.go
 		    -e GOARCH=$(GOARCH) \
 		    -w /usr/code \
 		    golang:1.5.3 \
-		    go build -a -ldflags "-X main.projectVersion=$(VERSION) -X main.projectBuild=$(COMMIT)" -o $(BIN)
+		    go build -a -ldflags "-X $(IMPORT_PATH)/cmd.ProjectVersion=$(VERSION) -X $(IMPORT_PATH)/cmd.ProjectBuild=$(COMMIT)" -o $(BIN)
 
 
-gobindata.go:
-		.gobuild/bin/go-bindata -pkg main ./output/embedded/
+output/gobindata.go:
+		.gobuild/bin/go-bindata -pkg output -o output/gobindata.go ./output/embedded/
 
 test: get-deps
 		docker run \
@@ -82,7 +85,7 @@ test: get-deps
 		-e GO15VENDOREXPERIMENT=1 \
 		-w /usr/code/ \
 	golang:1.5.3 \
-		bash -c 'cd .gobuild/src/github.com/giantswarm/fleemmer && go test $$(go list ./... | grep -v "gopath")'
+		bash -c 'cd $(PROJECT_PATH)/$(PROJECT) && go test $$(go list ./... | grep -v "gopath")'
 
 lint:
 	GOPATH=$(GOPATH) go vet $(go list ./... | grep -v "gopath")
