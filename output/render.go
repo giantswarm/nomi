@@ -7,8 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
-
+	"github.com/giantswarm/fleemmer/log"
 	"github.com/giantswarm/fleemmer/output/gnuplot"
 	"github.com/giantswarm/fleemmer/unit"
 )
@@ -63,14 +62,18 @@ func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirecto
 					valuesY = append(valuesY, metric.CPUUsage)
 				}
 			}
-			glog.V(2).Infof("Plotting date for %s", hostname)
+			if debug {
+				log.Logger().Infof("Plotting data for %s", hostname)
+			}
 			p.PlotXY(valuesX, valuesY, fmt.Sprintf("%s - Time/CPU", hostname))
 		}
 		p.SetXLabel("Timestamp")
 		p.SetYLabel("CPU usage")
 		p.CheckedCmd("set terminal pdf")
 
-		glog.V(2).Infof("Generating plot %s", process)
+		if debug {
+			log.Logger().Infof("Generating plot %s", process)
+		}
 		p.CheckedCmd(fmt.Sprintf("set output '%s/%s.pdf'", plotsDirectory, process))
 		p.CheckedCmd("replot")
 

@@ -9,9 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
-
 	"github.com/giantswarm/fleemmer/definition"
+	"github.com/giantswarm/fleemmer/log"
 )
 
 type stats []statsLine
@@ -64,6 +63,8 @@ type statsLine struct {
 	StoppedCount   int
 }
 
+var Verbose bool
+
 func (l statsLine) toSSV() string {
 	return fmt.Sprintf("%s %f %f %d %d %d %d",
 		l.ID,
@@ -75,7 +76,8 @@ func (l statsLine) toSSV() string {
 		l.StoppedCount)
 }
 
-func NewEngine(def definition.BenchmarkDef) (*UnitEngine, error) {
+func NewEngine(def definition.BenchmarkDef, verbose bool) (*UnitEngine, error) {
+	Verbose = verbose
 	return &UnitEngine{
 		mu:            new(sync.Mutex),
 		benchmark:     def,
@@ -143,7 +145,7 @@ func (e *UnitEngine) MarkUnitRunning(id string) time.Duration {
 	defer e.mu.Unlock()
 	state, exists := e.startingUnits[id]
 	if !exists {
-		glog.Errorf("unit %s cannot be found in the starting pool\n", id)
+		log.Logger().Errorf("unit %s cannot be found in the starting pool\n", id)
 		return time.Duration(0)
 	}
 	delete(e.startingUnits, id)
@@ -159,7 +161,7 @@ func (e *UnitEngine) MarkUnitStopped(id string) {
 	defer e.mu.Unlock()
 	state, exists := e.stoppingUnits[id]
 	if !exists {
-		glog.Errorf("unit %s cannot be found in the stopping pool\n", id)
+		log.Logger().Errorf("unit %s cannot be found in the stopping pool\n", id)
 		return
 	}
 	delete(e.stoppingUnits, id)
@@ -229,9 +231,11 @@ func (e *UnitEngine) expectRunning(obj definition.ExpectRunning) {
 }
 
 func (e *UnitEngine) float(obj definition.Float) {
-	glog.V(2).Infoln("float instruction not implemented yet...")
+	if Verbose {
+		log.Logger().Info("float instruction not implemented yet...")
+	}
 	//duration := time.Duration(obj.Duration) * time.Millisecond
-	//glog.V(2).Infof("floating for %s\n", duration)
+	//log.Infof("floating for %s\n", duration)
 	//time.Sleep(duration)
 }
 
@@ -240,7 +244,7 @@ func genRandomID() string {
 	b := make([]byte, c)
 	_, err := rand.Read(b)
 	if err != nil {
-		panic(err)
+		log.Logger().Fatal(err)
 	}
 	return hex.EncodeToString(b)
 }
@@ -268,12 +272,15 @@ func (e *UnitEngine) stopUnit(id string, state UnitState) {
 	e.mu.Lock()
 	newState := state
 	newState.stopRequestTime = time.Now()
-	glog.V(3).Infoln("marking beacon as to be deleted: " + id)
+
+	if Verbose {
+		log.Logger().Infof("marking beacon as to be deleted: %s", id)
+	}
 	e.stoppingUnits[id] = newState
 	e.mu.Unlock()
 	err := e.StopFunc(id)
 	if err != nil {
-		glog.Warningln(err)
+		log.Logger().Warning(err)
 	}
 }
 

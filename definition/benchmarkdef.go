@@ -4,13 +4,14 @@ package definition
 
 import (
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/giantswarm/fleemmer/log"
 )
 
 type StopCommand string
@@ -61,7 +62,7 @@ type BenchmarkDef struct {
 func BenchmarkDefByFile(filePath string) (BenchmarkDef, error) {
 	def, err := parseBenchmarkDef(filePath)
 	if err != nil {
-		log.Fatalf("error when parsing the benchmark definition %v", err)
+		log.Logger().Fatalf("error when parsing the benchmark definition %v", err)
 	}
 	return def, err
 }
@@ -95,17 +96,17 @@ func BenchmarkDefByRawInstructions(instructions string, igSize int) (BenchmarkDe
 		switch cmd {
 		case instructionStart:
 			if len(args) != 2 {
-				log.Fatalf("start requires 2 arguments: max and time between starts. eg: (start 10 100ms)")
+				log.Logger().Fatalf("start requires 2 arguments: max and time between starts. eg: (start 10 100ms)")
 			}
 
 			max, err := strconv.Atoi(args[0])
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Logger().Fatalf("%v", err)
 			}
 			var interval int
 			interval, err = strconv.Atoi(args[1])
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Logger().Fatalf("%v", err)
 			}
 
 			def.Instructions = append(def.Instructions, Instruction{
@@ -117,16 +118,16 @@ func BenchmarkDefByRawInstructions(instructions string, igSize int) (BenchmarkDe
 			break
 		case instructionFloat:
 			if len(args) != 2 {
-				log.Fatalf("float requires 2 arguments: rate and duration")
+				log.Logger().Fatalf("float requires 2 arguments: rate and duration")
 			}
 			rate, err := strconv.ParseFloat(args[0], 64)
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Logger().Fatalf("%v", err)
 			}
 			var duration int
 			duration, err = strconv.Atoi(args[1])
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Logger().Fatalf("%v", err)
 			}
 
 			def.Instructions = append(def.Instructions, Instruction{
@@ -139,7 +140,7 @@ func BenchmarkDefByRawInstructions(instructions string, igSize int) (BenchmarkDe
 		case instructionSleep:
 			timeout, err := strconv.Atoi(args[0])
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Logger().Fatalf("%v", err)
 			}
 
 			def.Instructions = append(def.Instructions, Instruction{
@@ -148,16 +149,16 @@ func BenchmarkDefByRawInstructions(instructions string, igSize int) (BenchmarkDe
 			break
 		case instructionExpectRunning:
 			if len(args) != 2 {
-				log.Fatalf("expect-running requires 2 arguments: [><] int")
+				log.Logger().Fatal("expect-running requires 2 arguments: [><] int")
 			}
 
 			qty, err := strconv.Atoi(args[1])
 			if err != nil {
-				log.Fatalf("%v", err)
+				log.Logger().Fatalf("%v", err)
 			}
 			symbol := ExpectRunningSymbol(args[0])
 			if symbol != Lower && symbol != Greater {
-				log.Fatalf("expect-running comparator has to be > or <")
+				log.Logger().Fatalf("expect-running comparator has to be > or <")
 			}
 
 			def.Instructions = append(def.Instructions, Instruction{
@@ -182,16 +183,16 @@ func parseBenchmarkDef(filePath string) (BenchmarkDef, error) {
 	filename, _ := filepath.Abs(filePath)
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Fatalf("unable to read yaml file %v", err)
+		log.Logger().Fatalf("unable to read yaml file %v", err)
 	}
 
 	def := BenchmarkDef{}
 	if err := yaml.Unmarshal(yamlFile, &def); err != nil {
-		log.Fatalf("unable to parse the yaml test definition: %v", err)
+		log.Logger().Fatalf("unable to parse the yaml test definition: %v", err)
 	}
 
 	if !validateDefinition(def) {
-		log.Fatal("benchmark definition contains wrong values")
+		log.Logger().Fatal("benchmark definition contains wrong values")
 	}
 
 	return def, nil
@@ -199,30 +200,30 @@ func parseBenchmarkDef(filePath string) (BenchmarkDef, error) {
 
 func validateDefinition(benchmark BenchmarkDef) bool {
 	if benchmark.InstanceGroupSize <= 0 {
-		log.Fatal("instance group size has to be greater or equal to 1")
+		log.Logger().Fatal("instance group size has to be greater or equal to 1")
 	}
 	emptyInstruction := &Instruction{}
 
 	for _, instruction := range benchmark.Instructions {
 		if instruction.Start != emptyInstruction.Start && (instruction.Start.Max == 0 || instruction.Start.Interval < 0) {
-			log.Printf("wrong values for the start operation of instruction %v", instruction)
+			log.Logger().Errorf("wrong values for the start operation of instruction %v", instruction)
 			return false
 		}
 		if instruction.Float != emptyInstruction.Float && (instruction.Float.Rate <= 0 || instruction.Float.Duration <= 0) {
-			log.Printf("wrong values for the start operation of instruction %v", instruction)
+			log.Logger().Errorf("wrong values for the start operation of instruction %v", instruction)
 			return false
 		}
 		if instruction.ExpectRunning != emptyInstruction.ExpectRunning &&
 			((instruction.ExpectRunning.Symbol != Lower && instruction.ExpectRunning.Symbol != Greater) || instruction.ExpectRunning.Amount < 0) {
-			log.Printf("wrong values for the expect-running operation of instruction %v", instruction)
+			log.Logger().Errorf("wrong values for the expect-running operation of instruction %v", instruction)
 			return false
 		}
 		if instruction.Sleep < 0 {
-			log.Printf("wrong values for the sleep operation of instruction %v", instruction)
+			log.Logger().Errorf("wrong values for the sleep operation of instruction %v", instruction)
 			return false
 		}
 		if instruction.Stop != "" && instruction.Stop != StopAll {
-			log.Printf("wrong values for the stop operation of instruction %v", instruction)
+			log.Logger().Errorf("wrong values for the stop operation of instruction %v", instruction)
 			return false
 		}
 	}

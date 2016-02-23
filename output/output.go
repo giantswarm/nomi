@@ -4,14 +4,13 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/aybabtme/uniplot/histogram"
-	"github.com/golang/glog"
 
+	"github.com/giantswarm/fleemmer/log"
 	"github.com/giantswarm/fleemmer/unit"
 )
 
@@ -48,15 +47,15 @@ func DumpHTMLTar(html []byte, scriptJs []byte, stats unit.Stats) {
 			Size:       int64(len(file.Body)),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			glog.Fatalln(err)
+			log.Logger().Fatal(err)
 		}
 		if _, err := tw.Write([]byte(file.Body)); err != nil {
-			glog.Fatalln(err)
+			log.Logger().Fatal(err)
 		}
 	}
 
 	if err := tw.Close(); err != nil {
-		glog.Fatalln(err)
+		log.Logger().Fatal(err)
 	}
 
 }
@@ -68,6 +67,5 @@ func PrintHistogram(stats unit.Stats, out io.Writer) {
 		delays = append(delays, ev.Delay)
 	}
 	hist := histogram.Hist(10, delays)
-	fmt.Println(">> Histogram Starting Units Delay <<")
 	histogram.Fprint(out, hist, histogram.Linear(20))
 }

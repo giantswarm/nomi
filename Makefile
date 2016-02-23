@@ -49,6 +49,7 @@ deps:
 	@GOPATH=$(GOPATH) go get github.com/coreos/fleet/client
 	@GOPATH=$(GOPATH) go get github.com/coreos/fleet/schema
 	@GOPATH=$(GOPATH) go get github.com/golang/glog
+	@GOPATH=$(GOPATH) go get github.com/op/go-logging
 	@GOPATH=$(GOPATH) go get github.com/gorilla/mux
 	@GOPATH=$(GOPATH) go get gopkg.in/yaml.v2
 	@GOPATH=$(GOPATH) go get github.com/ajstarks/svgo

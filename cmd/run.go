@@ -1,18 +1,16 @@
 package cmd
 
 import (
-	"flag"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
 
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
 	"github.com/giantswarm/fleemmer/definition"
 	"github.com/giantswarm/fleemmer/fleet"
+	"github.com/giantswarm/fleemmer/log"
 	"github.com/giantswarm/fleemmer/output"
 	"github.com/giantswarm/fleemmer/unit"
 )
@@ -32,33 +30,32 @@ type runCmdFlags struct {
 	dumpHTMLTarFlag bool
 	generatePlots   bool
 	igSize          int
+	verbose         bool
+	useDocker       bool
+	useRkt          bool
 }
 
 func (f runCmdFlags) Validate() {
 	if f.dumpJSONFlag && f.dumpHTMLTarFlag {
-		glog.Fatalln("dump option is required. Please, choose between:  dump-json OR dump-html-tar")
-	}
-
-	if !f.dumpJSONFlag && !f.dumpHTMLTarFlag {
-		glog.Warningln("output mode option is required")
+		log.Logger().Fatal("dump option is required. Please, choose between:  dump-json OR dump-html-tar")
 	}
 
 	if f.benchmarkFile == "" && f.rawInstructions == "" {
-		glog.Fatalln("benchmark file definition or raw instructions is required")
+		log.Logger().Fatal("benchmark file definition or raw instructions is required")
 	}
 
 	if f.benchmarkFile != "" && f.rawInstructions != "" {
-		glog.Fatalln("benchmark file definition or raw instructions are mutual exclusive")
+		log.Logger().Fatal("benchmark file definition or raw instructions are mutual exclusive")
 	}
 
 	if f.benchmarkFile == "" && f.rawInstructions != "" && f.igSize <= 0 {
-		glog.Fatalln("instance group size has to be greater than 0 when using raw-instructions parameter")
+		log.Logger().Fatal("instance group size has to be greater than 0 when using raw-instructions parameter")
 	}
 
 	if f.generatePlots {
 		if _, err := exec.LookPath("gnuplot"); err != nil {
-			glog.V(2).Infof("generate-gnuplots: could not find path to 'gnuplot':\n%v\n", err)
-			glog.Fatalln("generate-gnuplots option requires 'gnuplot' software installed")
+			log.Logger().Infof("generate-gnuplots: could not find path to 'gnuplot':\n%v\n", err)
+			log.Logger().Fatal("generate-gnuplots option requires 'gnuplot' software installed")
 		}
 	}
 }
@@ -80,18 +77,17 @@ func init() {
 	runCmd.Flags().StringVar(&runFlags.rawInstructions, "raw-instructions", "", "instructions to spawn/stop/float units")
 	runCmd.Flags().BoolVar(&runFlags.dumpJSONFlag, "dump-json", false, "dump json stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.dumpHTMLTarFlag, "dump-html-tar", false, "dump tarred html stats to stdout")
+	runCmd.Flags().BoolVar(&runFlags.verbose, "verbose", false, "verbose output")
+	runCmd.Flags().BoolVar(&runFlags.useDocker, "use-docker", false, "use systemd units that deploy docker containers")
+	runCmd.Flags().BoolVar(&runFlags.useRkt, "use-rkt", false, "use systemd units that deploy rkt containers")
 	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/fleemmer_plots)")
 	runCmd.Flags().IntVar(&runFlags.igSize, "instancegroup-size", 1, "instance group size")
 }
 
 func runRun(cmd *cobra.Command, args []string) {
-	log.SetFlags(0)
-	log.SetPrefix("fleemmer: ")
-	flag.Set("logtostderr", "true")
-
 	runFlags.Validate()
 	fleetPool := fleet.NewFleetPool(20)
-	
+
 	if runFlags.listenAddr == "" {
 		// We extract the public CoreOS ip of the host machine
 		ip, err := fleet.CoreosHostPublicIP()
@@ -104,25 +100,25 @@ func runRun(cmd *cobra.Command, args []string) {
 
 	existingUnits, err := fleetPool.ListUnits()
 	if err != nil {
-		glog.Fatalln(err)
+		log.Logger().Fatal(err)
 	}
 
 	var benchmark definition.BenchmarkDef
 	if runFlags.benchmarkFile == "" {
 		benchmark, err = definition.BenchmarkDefByRawInstructions(runFlags.rawInstructions, runFlags.igSize)
 		if err != nil {
-			glog.Fatalln("unable to parse the introduced raw instructions")
+			log.Logger().Fatal("unable to parse the introduced raw instructions")
 		}
 	} else {
 		benchmark, err = definition.BenchmarkDefByFile(runFlags.benchmarkFile)
 	}
 	if err != nil {
-		glog.Fatalln(err)
+		log.Logger().Fatal(err)
 	}
 
-	unitEngine, err := unit.NewEngine(benchmark)
+	unitEngine, err := unit.NewEngine(benchmark, runFlags.verbose)
 	if err != nil {
-		glog.Fatalln(err)
+		log.Logger().Fatal(err)
 	}
 
 	observer := unit.NewBeaconObserver(unitEngine)
@@ -132,12 +128,16 @@ func runRun(cmd *cobra.Command, args []string) {
 	fleetPool.StartUnit(unit.MakeStatsDumper("systemd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -p 1 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "systemd", runFlags.listenAddr))
 
 	unitEngine.SpawnFunc = func(id string) error {
-		glog.V(2).Infof("spawning unit with id %s\n", id)
-		return fleetPool.StartUnitGroup(unit.MakeUnitChain(id, runFlags.listenAddr, unitEngine.InstanceGroupSize()))
+		if runFlags.verbose {
+			log.Logger().Infof("spawning unit with id %s\n", id)
+		}
+		return fleetPool.StartUnitGroup(unit.MakeUnitChain(id, runFlags.listenAddr, unitEngine.InstanceGroupSize(), runFlags.useDocker, runFlags.useRkt))
 	}
 
 	unitEngine.StopFunc = func(id string) error {
-		glog.V(2).Infof("stopping unit with id %s\n", id)
+		if runFlags.verbose {
+			log.Logger().Infof("stopping unit with id %s\n", id)
+		}
 		return fleetPool.Stop(beaconUnitPrefix + "-0@" + id + ".service")
 	}
 
@@ -145,7 +145,7 @@ func runRun(cmd *cobra.Command, args []string) {
 
 	existingUnits, err = fleetPool.ListUnits()
 	if err != nil {
-		glog.Errorf("error listing units %v", err)
+		log.Logger().Errorf("error listing units %v", err)
 	}
 
 	wg := new(sync.WaitGroup)
@@ -153,7 +153,9 @@ func runRun(cmd *cobra.Command, args []string) {
 		if strings.HasPrefix(unit.Name, beaconUnitPrefix) {
 			wg.Add(1)
 			go func(unitName string) {
-				glog.V(2).Infoln("destroying old unit: " + unitName)
+				if runFlags.verbose {
+					log.Logger().Infof("destroying old unit: %s", unitName)
+				}
 				fleetPool.Destroy(unitName)
 				wg.Done()
 			}(unit.Name)
@@ -168,12 +170,12 @@ func runRun(cmd *cobra.Command, args []string) {
 	if runFlags.dumpHTMLTarFlag {
 		html, err := output.Asset("output/embedded/render.html")
 		if err != nil {
-			glog.Fatalln(err)
+			log.Logger().Fatal(err)
 		}
 
 		scriptJs, err := output.Asset("output/embedded/script.js")
 		if err != nil {
-			glog.Fatalln(err)
+			log.Logger().Fatal(err)
 		}
 
 		output.DumpHTMLTar(html, scriptJs, unitEngine.Stats())
