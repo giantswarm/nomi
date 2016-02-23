@@ -3,5 +3,5 @@ bin/
 *.swp
 gopath
 bin-dist/
-bindata.go
+output/gobindata.go
 fleemmer

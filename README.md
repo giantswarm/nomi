@@ -69,17 +69,17 @@ instructions:
 
 Using a benchmark YAML file to run a test:
 
-`./fleemmer -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml" &>> outputFile `
+`./fleemmer --instancegroup-size=1 --dump-html-tar --benchmark-file="./examples/sample01.yaml" &>> outputFile `
 
 Using `raw-instructions` and `instancegroup-size` parameters to run a benchmark:
 
-`./fleemmer -instancegroup-size=1 -dump-json -raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
+`./fleemmer --instancegroup-size=1 --dump-json --raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
 
 Example of a script to send Fleemmer to a remote fleet cluster-node:
 
 ```
 scp fleemmer core@100.25.10.2:
-ssh core@100.25.10.2 './fleemmer -instancegroup-size=1 -dump-html-tar -benchmark-file="./examples/sample01.yaml"'
+ssh core@100.25.10.2 './fleemmer --instancegroup-size=1 --dump-html-tar --benchmark-file="./examples/sample01.yaml"'
 ```
 
 If you want to generate the plots with `gnuplot` in a specific directory `$PLOTS_DIR` use the Docker build:
@@ -94,9 +94,9 @@ docker run -ti \
  --net=host \
  --pid=host \
  giantswarm/fleemmer:latest \
- -addr=192.68.10.101:54541 \
- -generate-gnuplots \
- -raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
+ --addr=192.68.10.101:54541 \
+ --generate-gnuplots \
+ --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
 ```
 
 ## Contact
