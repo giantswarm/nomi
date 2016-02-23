@@ -85,7 +85,7 @@ test: get-deps
 		-e GO15VENDOREXPERIMENT=1 \
 		-w /usr/code/ \
 	golang:1.5.3 \
-		bash -c 'cd $(PROJECT_PATH)/$(PROJECT) && go test $$(go list ./... | grep -v "gopath")'
+		bash -c 'cd .gobuild/src/github.com/$(ORGANIZATION)/$(PROJECT) && go test $$(go list ./... | grep -v "gopath")'
 
 lint:
 	GOPATH=$(GOPATH) go vet $(go list ./... | grep -v "gopath")
