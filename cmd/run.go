@@ -61,16 +61,6 @@ func (f runCmdFlags) Validate() {
 			glog.Fatalln("generate-gnuplots option requires 'gnuplot' software installed")
 		}
 	}
-
-	if f.listenAddr == "" {
-		// We extract the public CoreOS ip of the host machine
-		ip, err := fleet.CoreosHostPublicIP()
-		if ip == "" || err != nil {
-			f.listenAddr = listenerDefaultIP + ":" + listenerDefaultPort
-		} else {
-			f.listenAddr = ip + ":" + listenerDefaultPort
-		}
-	}
 }
 
 var (
@@ -101,6 +91,16 @@ func runRun(cmd *cobra.Command, args []string) {
 
 	runFlags.Validate()
 	fleetPool := fleet.NewFleetPool(20)
+	
+	if runFlags.listenAddr == "" {
+		// We extract the public CoreOS ip of the host machine
+		ip, err := fleet.CoreosHostPublicIP()
+		if ip == "" || err != nil {
+			runFlags.listenAddr = listenerDefaultIP + ":" + listenerDefaultPort
+		} else {
+			runFlags.listenAddr = ip + ":" + listenerDefaultPort
+		}
+	}
 
 	existingUnits, err := fleetPool.ListUnits()
 	if err != nil {
