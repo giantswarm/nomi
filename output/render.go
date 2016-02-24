@@ -53,6 +53,11 @@ func GeneratePlots(stats unit.Stats, verbose bool) {
 	if len(stats.Start) > 0 {
 		generateUnitsStopCountPlot(fname, persist, debug, plotsDirectory, stats)
 	}
+
+	// Start units multiple plot
+	if len(stats.Start) > 0 {
+		generateUnitsStartMultiPlot(fname, persist, debug, plotsDirectory, stats)
+	}
 }
 
 func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirectory string, stats unit.Stats) {
@@ -75,7 +80,7 @@ func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirecto
 			if debug {
 				log.Logger().Infof("Plotting data for %s", hostname)
 			}
-			p.PlotXY(valuesX, valuesY, fmt.Sprintf("%s - Time/CPU", hostname))
+			p.PlotXY(valuesX, valuesY, fmt.Sprintf("%s - Time/CPU", hostname), "")
 		}
 		p.SetXLabel("Timestamp (secs)")
 		p.SetYLabel("CPU usage (%)")
@@ -110,7 +115,7 @@ func generateUnitsStartPlot(fname string, persist bool, debug bool, plotsDirecto
 		valuesX = append(valuesX, stats.CompletionTime)
 		valuesY = append(valuesY, stats.Delay)
 	}
-	p.PlotXY(valuesX, valuesY, "Start operation Completion/Delay seconds")
+	p.PlotXY(valuesX, valuesY, "Start operation Completion/Delay seconds", "")
 	p.SetXLabel("Completion time (secs)")
 	p.SetYLabel("Delay time (secs)")
 	p.CheckedCmd("set terminal pdf")
@@ -144,7 +149,7 @@ func generateUnitsStopPlot(fname string, persist bool, debug bool, plotsDirector
 		valuesX = append(valuesX, stats.CompletionTime)
 		valuesY = append(valuesY, stats.Delay)
 	}
-	p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds")
+	p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds", "")
 	p.CheckedCmd("replot")
 
 	time.Sleep(2)
@@ -173,9 +178,9 @@ func generateUnitsStartCountPlot(fname string, persist bool, debug bool, plotsDi
 	}
 
 	p.SetStyle("boxes")
-	p.PlotXY(valuesX1, valuesY1, "Starting")
+	p.PlotXY(valuesX1, valuesY1, "Starting", "")
 	p.SetStyle("lines")
-	p.PlotXY(valuesX2, valuesY2, "Running")
+	p.PlotXY(valuesX2, valuesY2, "Running", "")
 
 	p.SetXLabel("Timestamp (secs)")
 	p.SetYLabel("Number of units")
@@ -208,13 +213,47 @@ func generateUnitsStopCountPlot(fname string, persist bool, debug bool, plotsDir
 		valuesY2 = append(valuesY2, float64(stats.StoppedCount))
 	}
 
-	p.PlotXY(valuesX1, valuesY1, "Stopping")
-	p.PlotXY(valuesX2, valuesY2, "Stopped")
+	p.PlotXY(valuesX1, valuesY1, "Stopping", "")
+	p.PlotXY(valuesX2, valuesY2, "Stopped", "")
 
 	p.SetXLabel("Timestamp (secs)")
 	p.SetYLabel("Number of units")
 	p.CheckedCmd("set terminal pdf")
 	p.CheckedCmd(fmt.Sprintf("set output '%s/units_stop_count.pdf'", plotsDirectory))
+	p.CheckedCmd("replot")
+
+	time.Sleep(2)
+	p.CheckedCmd("q")
+}
+
+func generateUnitsStartMultiPlot(fname string, persist bool, debug bool, plotsDirectory string, stats unit.Stats) {
+	p, err := gnuplot.NewPlotter(fname, persist, debug)
+	if err != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err)
+		panic(err_string)
+	}
+	defer p.Close()
+
+	valuesX := make([]float64, 0)
+	valuesY := make([]float64, 0)
+	valuesY2 := make([]float64, 0)
+	p.CheckedCmd("set yrange [y1min:y1max]")
+	p.CheckedCmd("set y2range [y2min:y2max]")
+	p.SetXLabel("Completion time (secs)")
+	p.SetYLabel("Delay time (secs)")
+	p.CheckedCmd("set y2label 'Number of units'")
+	p.SetStyle("dots")
+	for _, stats := range stats.Start {
+		valuesX = append(valuesX, stats.CompletionTime)
+		valuesY = append(valuesY, stats.Delay)
+		valuesY2 = append(valuesY2, float64(stats.RunningCount))
+	}
+	p.PlotXY(valuesX, valuesY, "Start Completion/Delay secs/Units", "axes x1y1")
+	p.SetStyle("lines")
+	p.PlotXY(valuesX, valuesY2, "Running units", "axes x1y2")
+
+	p.CheckedCmd("set terminal pdf")
+	p.CheckedCmd(fmt.Sprintf("set output '%s/units_start_multi.pdf'", plotsDirectory))
 	p.CheckedCmd("replot")
 
 	time.Sleep(2)

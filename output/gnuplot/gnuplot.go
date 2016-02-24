@@ -8,6 +8,8 @@
 // See the gnuplot documentation page for the exact semantics of the gnuplot
 // commands.
 //  http://www.gnuplot.info/
+
+// This file has been modified by @Giant Swarm Gmbh
 package gnuplot
 
 import (
@@ -36,7 +38,7 @@ func Initialize() {
 		fmt.Printf("** could not find path to 'gnuplot':\n%v\n", err)
 		panic("could not find 'gnuplot'")
 	}
-	fmt.Printf("-- found gnuplot command: %s\n", g_gnuplot_cmd)
+	//fmt.Printf("-- found gnuplot command: %s\n", g_gnuplot_cmd)
 }
 
 type gnuplot_error struct {
@@ -57,7 +59,7 @@ func new_plotter_proc(persist bool) (*plotter_process, error) {
 	if persist {
 		proc_args = append(proc_args, "-persist")
 	}
-	fmt.Printf("--> [%v] %v\n", g_gnuplot_cmd, proc_args)
+	//fmt.Printf("--> [%v] %v\n", g_gnuplot_cmd, proc_args)
 	cmd := exec.Command(g_gnuplot_cmd, proc_args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -144,7 +146,7 @@ func (self *Plotter) PlotNd(title string, data ...[]float64) error {
 	case 1:
 		return self.PlotX(data[0], title)
 	case 2:
-		return self.PlotXY(data[0], data[1], title)
+		return self.PlotXY(data[0], data[1], title, "")
 	case 3:
 		return self.PlotXYZ(data[0], data[1], data[2], title)
 	}
@@ -196,7 +198,7 @@ func (self *Plotter) PlotX(data []float64, title string) error {
 //           []float64{10, 20, 30},
 //           []float64{11, 22, 33, 44},
 //           "my title")
-func (self *Plotter) PlotXY(x, y []float64, title string) error {
+func (self *Plotter) PlotXY(x, y []float64, title string, extrArg string) error {
 	npoints := min(len(x), len(y))
 
 	f, err := ioutil.TempFile(os.TempDir(), g_gnuplot_prefix)
@@ -218,10 +220,10 @@ func (self *Plotter) PlotXY(x, y []float64, title string) error {
 
 	var line string
 	if title == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, self.style)
+		line = fmt.Sprintf("%s \"%s\" %s with %s", cmd, fname, extrArg, self.style)
 	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, title, self.style)
+		line = fmt.Sprintf("%s \"%s\" title \"%s\" %s with %s",
+			cmd, fname, title, extrArg, self.style)
 	}
 	self.nplots += 1
 	return self.Cmd(line)
