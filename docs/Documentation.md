@@ -30,7 +30,7 @@ In the following, we detail the purpose of each of the elements that composes a 
     	- 	**max**: represents the amount of units to start.
     	- **interval**: in **milliseconds**, it represents the interval of time between start operations.
     - **sleep**: is the amount of time in **seconds** to go to sleep.
-    - **float**:
+    - **float**: **NOT IMPLEMENTED YET** vary the number of units by 'rate' during 'duration' seconds
     	- **rate**: represents the rate of (float).
     	- **duration**: represents the duration in seconds.
     - **expect-running**:

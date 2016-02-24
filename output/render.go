@@ -110,7 +110,7 @@ func generateUnitsStartPlot(fname string, persist bool, debug bool, plotsDirecto
 		valuesX = append(valuesX, stats.CompletionTime)
 		valuesY = append(valuesY, stats.Delay)
 	}
-	p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds")
+	p.PlotXY(valuesX, valuesY, "Start operation Completion/Delay seconds")
 	p.SetXLabel("Completion time (secs)")
 	p.SetYLabel("Delay time (secs)")
 	p.CheckedCmd("set terminal pdf")
