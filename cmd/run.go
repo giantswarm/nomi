@@ -182,8 +182,8 @@ func runRun(cmd *cobra.Command, args []string) {
 	}
 
 	if runFlags.generatePlots {
-		output.GeneratePlots(unitEngine.Stats())
+		output.GeneratePlots(unitEngine.Stats(), runFlags.verbose)
 	}
 
-	output.PrintHistogram(unitEngine.Stats(), os.Stderr)
+	output.PrintReport(unitEngine.Stats(), os.Stderr)
 }

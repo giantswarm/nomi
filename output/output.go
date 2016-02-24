@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -60,12 +61,41 @@ func DumpHTMLTar(html []byte, scriptJs []byte, stats unit.Stats) {
 
 }
 
-// PrintHistogram prints in stdout the units delay for the start operation
-func PrintHistogram(stats unit.Stats, out io.Writer) {
+// PrintReport prints in stdout a report of the the units delay for the start operation.
+func PrintReport(stats unit.Stats, out io.Writer) {
 	delays := []float64{}
+	maxRunningCount := 0
+	minStartingTime := 10000000.0
+	minDelay := 10000000.0
+	maxDelay := 0.0
+	maxCompletionTime := 0.0
+
 	for _, ev := range stats.Start {
+		if maxRunningCount <= ev.RunningCount {
+			maxRunningCount = ev.RunningCount
+		}
+		if minDelay >= ev.Delay {
+			minDelay = ev.Delay
+		}
+		if maxDelay <= ev.Delay {
+			maxDelay = ev.Delay
+		}
+		if minStartingTime > ev.StartTime {
+			minStartingTime = ev.StartTime
+		}
+		if maxCompletionTime <= ev.CompletionTime {
+			maxCompletionTime = ev.CompletionTime
+		}
+
 		delays = append(delays, ev.Delay)
 	}
 	hist := histogram.Hist(10, delays)
+
+	fmt.Println("Number of runnings units: ", maxRunningCount)
+	fmt.Println("Minimum time to start an unit: ", minDelay)
+	fmt.Println("Maximum time to start an unit: ", maxDelay)
+	fmt.Println("Time to compute the start operation (secs): ", float64(maxCompletionTime-minStartingTime))
+
+	fmt.Println("-- Histogram Starting Delay --")
 	histogram.Fprint(out, hist, histogram.Linear(20))
 }

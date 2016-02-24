@@ -2,9 +2,10 @@
 
 [![Build Status](https://api.travis-ci.org/giantswarm/fleemmer.svg)](https://travis-ci.org/giantswarm/fleemmer)
 [![](https://godoc.org/github.com/giantswarm/fleemmer?status.svg)](http://godoc.org/github.com/giantswarm/fleemmer)
+[![](https://img.shields.io/docker/pulls/giantswarm/fleemmer.svg)](http://hub.docker.com/giantswarm/fleemmer)
 [![IRC Channel](https://img.shields.io/badge/irc-%23giantswarm-blue.svg)](https://kiwiirc.com/client/irc.freenode.net/#giantswarm)
 
-**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. Fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. With Fleemmer, you can deploy benchmark units that deploy [Docker](https://github.com/docker/docker), [rkt](https://github.com/coreos/rkt) containers or just raw `systemd` units. Fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
 
 ## Requirements
 
@@ -12,92 +13,39 @@ Fleemmer requires to be installed on a fleet cluster-node to run properly.
 
 Dependencies:
 
-- fleet and systemd running on the host machine.
+- fleet, docker, rkt and systemd running on the host machine.
 - Optional: To generate gnu plots, support for gnuplot is required on the host machine. Alternatively, you can run Fleemmer as a Docker container, which comes with gnuplot installed, as shown below.
 
-## Benchmark file definition
+## Getting Fleemmer
 
-In the following, we detail the purpose of each one of the elements that composes a benchmark definition.
+Download the latest tarball from here: https://downloads.giantswarm.io/fleemmer/latest/fleemmer.tar.gz
 
-- **instancegroup-size**: indicates the amount of units that will conform an instance group.
-- **instructions**: contains a list of instructions that will be executed in descending order. Each instruction can optionally have one of the following elements:
-    - **start**:
-    	- 	**max**: represents the amount of units to start.
-    	- **interval**: In **Milliseconds**, it represents the interval of time between start operations.
-    - **sleep**: is the amount of time in **Seconds** to go to sleep.
-    - **float**:
-    	- **rate**: represents the rate of (float).
-    	- **duration**: represents the duration in Seconds.
-    - **expect-running**:
-	    - **amount**: represents the amount of expected running units.
-    	- **symbol**: used to indicate whether you expect `[<|>]` `expect-running/amount` units to be running.
-    - **stop**: indicates the directive used to stop the current units (stop-all|). At this moment, we only offer `stop-all` as an alternative to stop units.
+Clone the latest git repository version from here: `git@github.com:giantswarm/fleemmer.git`
 
-    **NOTE:** The order of the elements in an instruction indicates, in which order such an action will be triggered.
+Get the latest docker image from here: https://hub.docker.com/r/giantswarm/fleemmer/
 
-**Example:**
+## Running Fleemmer:
+
+`fleemmer help`
+
+### Run Fleemmer from source:
 
 ```
-instancegroup-size: 1
-instructions:
-  - start:
-     max: 8
-     interval: 200
-  - expect-running:
-    symbol: <
-    amount: 10
-  - sleep: 10
-  - start:
-     max: 3
-     interval: 300
-  - sleep: 200
-  - stop: stop-all
+make
+./fleemmer help
 ```
 
-## Fleemmer parameters
+More information on how to run Fleemmer and its required parameters in: [docs](docs)
 
-- **addr**: address to listen on. Fleemmer extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
-- **dump-json**: dump JSON stats to stdout.
-- **dump-html-tar**: dump tarred HTML stats to stdout.
-- **benchmark-file**: YAML file with the actions to be triggered and the size of the instance groups.
-- **raw-instructions**: benchmark raw instructions to be triggered, (requires `instancegroup-size` parameter) and the size of the instance groups.
-- **instancegroup-size**: size of the instance group in terms of units, (only if you use `raw-instructions`).
-- **generate-gnuplots**: generate gnuplots out of the collected metrics. It is preferable to use `raw-instructions` instead of `benchmark-file` to avoid specifying a docker volume to pass a YAML benchmark definition.
-    - **IMPORTANT:** You have to run Fleemmer as a Docker container in your CoreOS machine.
+## Further Steps
 
-## Run Fleemmer:
+Check more detailed documentation: [docs](docs)
 
-Using a benchmark YAML file to run a test:
+Check code documentation: [godoc](https://godoc.org/github.com/giantswarm/fleemmer)
 
-`./fleemmer --instancegroup-size=1 --dump-html-tar --benchmark-file="./examples/sample01.yaml" &>> outputFile `
+## Future Development
 
-Using `raw-instructions` and `instancegroup-size` parameters to run a benchmark:
-
-`./fleemmer --instancegroup-size=1 --dump-json --raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)" &>>outfile`
-
-Example of a script to send Fleemmer to a remote fleet cluster-node:
-
-```
-scp fleemmer core@100.25.10.2:
-ssh core@100.25.10.2 './fleemmer --instancegroup-size=1 --dump-html-tar --benchmark-file="./examples/sample01.yaml"'
-```
-
-If you want to generate the plots with `gnuplot` in a specific directory `$PLOTS_DIR` use the Docker build:
-
-```
-PLOTS_DIR=/tmp
-...
-
-docker run -ti \
- -v $PLOTS_DIR:/fleemmer_plots \
- -v /var/run/fleet.sock:/var/run/fleet.sock \
- --net=host \
- --pid=host \
- giantswarm/fleemmer:latest \
- --addr=192.68.10.101:54541 \
- --generate-gnuplots \
- --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
-```
+- Future directions/vision
 
 ## Contact
 
