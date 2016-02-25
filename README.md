@@ -21,7 +21,7 @@ Dependencies:
 
 Download the latest tarball from here: https://downloads.giantswarm.io/fleemmer/latest/fleemmer.tar.gz
 
-Clone the latest git repository version from here: `git@github.com:giantswarm/fleemmer.git`
+Clone the latest git repository from here: https://github.com/giantswarm/fleemmer.git
 
 Get the latest docker image from here: https://hub.docker.com/r/giantswarm/fleemmer/
 
