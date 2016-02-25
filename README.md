@@ -5,7 +5,7 @@
 [![](https://img.shields.io/docker/pulls/giantswarm/fleemmer.svg)](http://hub.docker.com/giantswarm/fleemmer)
 [![IRC Channel](https://img.shields.io/badge/irc-%23giantswarm-blue.svg)](https://kiwiirc.com/client/irc.freenode.net/#giantswarm)
 
-**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. With Fleemmer, you can deploy benchmark units that deploy [Docker](https://github.com/docker/docker), [rkt](https://github.com/coreos/rkt) containers or just raw `systemd` units. Fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. With Fleemmer, you can deploy benchmark units that employ [Docker](https://github.com/docker/docker), [rkt](https://github.com/coreos/rkt) containers, or just raw `systemd` units. Fleemer is able to collect some metrics and generate some plots from those. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer provides the possibility to define instructions in one line using the parameter `raw-instructions`.
 
 ## Requirements
 
@@ -13,7 +13,8 @@ Fleemmer requires to be installed on a fleet cluster-node to run properly.
 
 Dependencies:
 
-- fleet, docker, rkt and systemd running on the host machine.
+- fleet and systemd running on the host machine.
+- In case you want to run Docker or rkt containers, the respective tool needs to be running on the host machines, too.
 - Optional: To generate gnu plots, support for gnuplot is required on the host machine. Alternatively, you can run Fleemmer as a Docker container, which comes with gnuplot installed, as shown below.
 
 ## Getting Fleemmer
