@@ -12,12 +12,12 @@ var ProjectBuild = "not versioned"
 var (
 	versionCmd = &cobra.Command{
 		Use:   "version",
-		Short: "Show fleemmer version",
-		Long:  "Show fleemmer version",
+		Short: "Show nomi version",
+		Long:  "Show nomi version",
 		Run:   versionRun,
 	}
 )
 
 func versionRun(cmd *cobra.Command, args []string) {
-	fmt.Printf("fleemmer version %s (build %s)\n", ProjectVersion, ProjectBuild)
+	fmt.Printf("nomi version %s (build %s)\n", ProjectVersion, ProjectBuild)
 }

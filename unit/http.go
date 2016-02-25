@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/giantswarm/fleemmer/log"
+	"github.com/giantswarm/nomi/log"
 )
 
 type BeaconObserver struct {

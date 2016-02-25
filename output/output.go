@@ -11,8 +11,8 @@ import (
 
 	"github.com/aybabtme/uniplot/histogram"
 
-	"github.com/giantswarm/fleemmer/log"
-	"github.com/giantswarm/fleemmer/unit"
+	"github.com/giantswarm/nomi/log"
+	"github.com/giantswarm/nomi/unit"
 )
 
 // DumpJSON prints the metrics of the benchmark in a JSON format

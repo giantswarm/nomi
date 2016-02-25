@@ -3,9 +3,6 @@ instructions:
    - start:
      max: 1
      interval: 200
-   - float:
-      rate: 1.0
-      duration: 110
    - expect-running:
       symbol: <
       amount: 10

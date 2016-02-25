@@ -7,13 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/giantswarm/fleemmer/log"
-	"github.com/giantswarm/fleemmer/output/gnuplot"
-	"github.com/giantswarm/fleemmer/unit"
+	"github.com/giantswarm/nomi/log"
+	"github.com/giantswarm/nomi/output/gnuplot"
+	"github.com/giantswarm/nomi/unit"
 )
 
 // Directory where the plots are stored by default
-const plotsDIR = "/fleemmer_plots"
+const plotsDIR = "/nomi_plots"
 
 var processTypes = []string{"fleetd", "systemd"}
 
