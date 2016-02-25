@@ -4,8 +4,8 @@
 
 ## Fleemmer parameters
 
-- **use-docker**: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers.
-- **use-rkt**: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers.
+- **use-docker**: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers. At this moment, we deploy a standard container that use a simple Linux Alpine image.
+- **use-rkt**: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers. At this moment, we deploy a standard aci which is based in a simple Linux Alpine image.
 - **addr**: address to listen events from the deployed units. This parameter is **important** to allow units notify Fleemmer when they change their state. Fleemmer extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
 - **dump-json**: dump JSON collected metrics to stdout.
 - **dump-html-tar**: dump tarred HTML stats to stdout.
