@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+
+	"github.com/giantswarm/fleemmer/log"
 )
 
 type BeaconObserver struct {
@@ -28,16 +29,21 @@ func (s *BeaconObserver) StartHTTPService(addr string) {
 	r.HandleFunc("/stats/{statsID}", s.StatsHandler).Methods("POST")
 
 	http.Handle("/", r)
-	glog.V(3).Infof("listening on %s\n", addr)
+	if Verbose {
+		log.Logger().Infof("listening on %s\n", addr)
+	}
+
 	go http.ListenAndServe(addr, nil)
-	glog.V(2).Infof("listening on %s\n", addr)
+	if Verbose {
+		log.Logger().Infof("listening on %s\n", addr)
+	}
 }
 
 func withIDParam(handler func(beaconID string, w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		beaconID := mux.Vars(r)["beaconID"]
 		if beaconID == "" {
-			glog.Errorln("empty beaconID")
+			log.Logger().Error("empty beaconID")
 			w.WriteHeader(400)
 		} else {
 			handler(beaconID, w, r)
@@ -47,7 +53,9 @@ func withIDParam(handler func(beaconID string, w http.ResponseWriter, r *http.Re
 
 func (s *BeaconObserver) HelloHandler(beaconID string, w http.ResponseWriter, r *http.Request) {
 	delay := s.unitEngine.MarkUnitRunning(beaconID)
-	glog.V(2).Infof("marked beacon as running: %s [%d] %f", beaconID, len(s.unitEngine.runningUnits), delay.Seconds())
+	if Verbose {
+		log.Logger().Infof("marked beacon as running: %s [%d] %f", beaconID, len(s.unitEngine.runningUnits), delay.Seconds())
+	}
 	w.Write([]byte("ok.\n"))
 }
 
@@ -55,12 +63,13 @@ func (s *BeaconObserver) AliveHandler(beaconID string, w http.ResponseWriter, r 
 	if _, isStopped := s.unitEngine.stoppingUnits[beaconID]; isStopped {
 		w.WriteHeader(500)
 	} else {
-		//	glog.V(2).Infoln("ensuring beacon is marked as running: " + beaconID)
 		w.Write([]byte("ok.\n"))
 	}
 }
 func (s *BeaconObserver) ByeHandler(beaconID string, w http.ResponseWriter, r *http.Request) {
-	glog.V(2).Infof("marking beacon as stopped: %s [%d]", beaconID, len(s.unitEngine.stoppedUnits)+len(s.unitEngine.runningUnits)+len(s.unitEngine.startingUnits))
+	if Verbose {
+		log.Logger().Infof("marking beacon as stopped: %s [%d]", beaconID, len(s.unitEngine.stoppedUnits)+len(s.unitEngine.runningUnits)+len(s.unitEngine.startingUnits))
+	}
 	s.unitEngine.MarkUnitStopped(beaconID)
 	w.Write([]byte("ok.\n"))
 }
@@ -76,7 +85,7 @@ func (s *BeaconObserver) StatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	n, err := fmt.Sscanf(b.String(), "%s %f %d", &hostname, &cpuusage, &rss)
 	if err != nil || n != 3 {
-		glog.Warningln("don't know how to parse statsline: " + b.String())
+		log.Logger().Warningf("don't know how to parse statsline: " + b.String())
 		return
 	}
 

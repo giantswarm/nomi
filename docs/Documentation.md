@@ -1,6 +1,19 @@
 # Documentation
 
-**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. Fleemer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+**Fleemmer** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. With Fleemmer, you can deploy benchmark units that deploy [Docker](https://github.com/docker/docker), [rkt](https://github.com/coreos/rkt) containers or just raw `systemd` units. Fleemmer is able to collect some metrics and generates some plots. To make use of Fleemmer, you just need to define your own benchmark using a YAML file. Fleemmer parses this file and runs the benchmark according to the instructions defined in it. Additionally, Fleemmer also provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+
+## Fleemmer parameters
+
+- **use-docker**: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers. At this moment, we deploy a standard container that use a simple Linux Alpine image.
+- **use-rkt**: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers. At this moment, we deploy a standard aci which is based in a simple Linux Alpine image.
+- **addr**: address to listen events from the deployed units. This parameter is **important** to allow units notify Fleemmer when they change their state. Fleemmer extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
+- **dump-json**: dump JSON collected metrics to stdout.
+- **dump-html-tar**: dump tarred HTML stats to stdout.
+- **benchmark-file**: YAML file with the actions to be triggered and the size of the instance groups.
+- **raw-instructions**: benchmark raw instructions to be triggered, (requires `instancegroup-size` parameter) and the size of the instance groups.
+- **instancegroup-size**: size of the instance group in terms of units, (only if you use `raw-instructions`).
+- **generate-gnuplots**: generate gnuplots out of the collected metrics. It is preferable to use `raw-instructions` instead of `benchmark-file` to avoid specifying a docker volume to pass a YAML benchmark definition.
+    - **IMPORTANT:** You have to run Fleemmer as a Docker container in your CoreOS machine.
 
 ## Benchmark file definition
 
@@ -15,9 +28,9 @@ In the following, we detail the purpose of each of the elements that composes a 
 - **instructions**: contains a list of instructions that will be executed in descending order. Each instruction can optionally have one of the following elements:
     - **start**:
     	- 	**max**: represents the amount of units to start.
-    	- **interval**: In **milliseconds**, it represents the interval of time between start operations.
+    	- **interval**: in **milliseconds**, it represents the interval of time between start operations.
     - **sleep**: is the amount of time in **seconds** to go to sleep.
-    - **float**:
+    - **float**: **NOT IMPLEMENTED YET** vary the number of units by 'rate' during 'duration' seconds
     	- **rate**: represents the rate of (float).
     	- **duration**: represents the duration in seconds.
     - **expect-running**:
@@ -32,18 +45,68 @@ In the following, we detail the purpose of each of the elements that composes a 
 ```
 instancegroup-size: 1
 instructions:
-  - sleep: 1
   - start:
-     max: 2700
-     interval: 100
-  - sleep: 700
+     max: 8
+     interval: 200
+  - expect-running:
+    symbol: <
+    amount: 10
+  - sleep: 10
+  - start:
+     max: 3
+     interval: 300
+  - sleep: 200
   - stop: stop-all
 ```
 
 ### Passing a string with the instructions via `raw-instructions`
 
 The main difference is the input format, in which the instructions are entered. When using `raw-instructions`, those are passed in a string fashion manner,
-e.g. `-raw-instructions="(sleep 1) (start 200 100) (stop-all)"`. Each parenthesis represents a single instruction that will be executed in sequence and following the inline order. Therefore, a sleep instruction will be followed by a start (with Max: 200 and Duration: 100) and stop operations.
+e.g. `--raw-instructions="(sleep 1) (start 200 100) (stop-all)"`. Each parenthesis represents a single instruction that will be executed in sequence and following the inline order. Therefore, a sleep instruction will be followed by a start (with Max: 200 and Duration: 100) and stop operations.
+
+## Running Fleemmer:
+
+Using a benchmark YAML file to run a test that deploys rkt containers:
+
+`fleemmer run --instancegroup-size=1 --dump-json --benchmark-file="./examples/sample01.yaml" --use-rkt`
+
+Using `raw-instructions` and `instancegroup-size` parameters to run a benchmark that deploys raw systemd units:
+
+`fleemmer run --instancegroup-size=1 --dump-json --raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)"`
+
+### Run Fleemmer from source:
+
+```
+make
+./fleemmer run --instancegroup-size=1 --dump-json --benchmark-file="./examples/sample01.yaml" --use-rkt
+```
+
+Example of a script to send Fleemmer to a remote fleet cluster-node:
+
+```
+scp fleemmer core@100.25.10.2:
+ssh core@100.25.10.2 'fleemmer run --instancegroup-size=1 --dump-html-tar --benchmark-file="./examples/sample01.yaml"'
+```
+
+### Run Fleemmer within a Docker container:
+
+If you want to generate the plots with `gnuplot` in a specific directory `$PLOTS_DIR` use the Docker build:
+
+```
+PLOTS_DIR=/tmp
+...
+
+docker run -ti \
+ -v $PLOTS_DIR:/fleemmer_plots \
+ -v /var/run/fleet.sock:/var/run/fleet.sock \
+ --net=host \
+ --pid=host \
+ giantswarm/fleemmer:latest \
+ --addr=192.68.10.101:54541 \
+ --generate-gnuplots \
+ --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
+```
+
 
 ## Collect the results of a benchmark
 
@@ -88,25 +151,26 @@ docker run -ti \
  --net=host \
  --pid=host \
  giantswarm/fleemmer \
- -addr=192.68.10.101:54541 \
- -generate-plots \
- -raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
+ run
+ --addr=192.68.10.101:54541 \
+ --generate-plots \
+ --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
 ```
 
 **NOTE:** We used a heavier base Docker image due to bugs when using the gnuplot package of lighter linux distros like Alpine.
 
-Initially, we just generate four plots but we you can also generate your own customized plots with this tool.
+Initially, we just generate four plots but you can also generate your own customized plots with this tool.
 
 Example of a gnuplot that shows the CPU usage(%) of `systemd` at different moments in a fleet cluster:
 
-![systemd](https://cloud.githubusercontent.com/assets/3602792/13027517/b877cee0-d252-11e5-97a9-fcf18ffc802d.png)
+![systemd](images/systemd.png)
 
 Example of a gnuplot that shows the CPU usage(%) of `fleetd` at different moments in a fleet cluster:
 
-![fleetd](https://cloud.githubusercontent.com/assets/3602792/13027516/b871b064-d252-11e5-8d02-461f3b0b49f9.png)
+![fleetd](images/fleetd.png)
 
 Example of a gnuplot that shows the delays (seconds) of `start` operations:
-![units_start](https://cloud.githubusercontent.com/assets/3602792/13027491/48f5704a-d252-11e5-83bf-1fec97bc953f.png)
+![units_start](images/units_start.png)
 
 Example of a gnuplot that shows the delays (seconds) of `stop` operations:
-![units_stop](https://cloud.githubusercontent.com/assets/3602792/13027518/b87e3f28-d252-11e5-8768-416b7c379c5a.png)
+![units_stop](images/units_stop.png)
