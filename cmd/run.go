@@ -8,11 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/giantswarm/fleemmer/definition"
-	"github.com/giantswarm/fleemmer/fleet"
-	"github.com/giantswarm/fleemmer/log"
-	"github.com/giantswarm/fleemmer/output"
-	"github.com/giantswarm/fleemmer/unit"
+	"github.com/giantswarm/nomi/definition"
+	"github.com/giantswarm/nomi/fleet"
+	"github.com/giantswarm/nomi/log"
+	"github.com/giantswarm/nomi/output"
+	"github.com/giantswarm/nomi/unit"
 )
 
 const (
@@ -80,7 +80,7 @@ func init() {
 	runCmd.Flags().BoolVar(&runFlags.verbose, "verbose", false, "verbose output")
 	runCmd.Flags().BoolVar(&runFlags.useDocker, "use-docker", false, "use systemd units that deploy docker containers")
 	runCmd.Flags().BoolVar(&runFlags.useRkt, "use-rkt", false, "use systemd units that deploy rkt containers")
-	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/fleemmer_plots)")
+	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/nomi_plots)")
 	runCmd.Flags().IntVar(&runFlags.igSize, "instancegroup-size", 1, "instance group size")
 }
 

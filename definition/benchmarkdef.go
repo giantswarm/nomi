@@ -1,5 +1,5 @@
 // This definition package implements the transformation of a YAML definition
-// to a fleemmer benchmark
+// to a nomi benchmark
 package definition
 
 import (
@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/giantswarm/fleemmer/log"
+	"github.com/giantswarm/nomi/log"
 )
 
 type StopCommand string

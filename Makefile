@@ -1,4 +1,4 @@
-PROJECT=fleemmer
+PROJECT=nomi
 ORGANIZATION=giantswarm
 
 BUILD_PATH := $(shell pwd)/.gobuild
@@ -26,7 +26,7 @@ clean:
 		rm -rf $(BUILD_PATH) $(BIN) output/gobindata.go
 
 install: $(BIN)
-	cp fleemmer /usr/local/bin/
+	cp nomi /usr/local/bin/
 
 get-deps: .gobuild .gobuild/bin/go-bindata
 

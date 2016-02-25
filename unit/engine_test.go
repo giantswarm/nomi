@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/giantswarm/fleemmer/definition"
+	"github.com/giantswarm/nomi/definition"
 )
 
 func TestEngine(t *testing.T) {

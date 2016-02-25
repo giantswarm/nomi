@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/giantswarm/fleemmer/cmd"
+	"github.com/giantswarm/nomi/cmd"
 )
 
 func main() {
-	if err := cmd.FleemmerCmd.Execute(); err != nil {
+	if err := cmd.NomiCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}

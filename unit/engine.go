@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/giantswarm/fleemmer/definition"
-	"github.com/giantswarm/fleemmer/log"
+	"github.com/giantswarm/nomi/definition"
+	"github.com/giantswarm/nomi/log"
 )
 
 type stats []statsLine
