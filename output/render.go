@@ -242,6 +242,8 @@ func generateUnitsStartMultiPlot(fname string, persist bool, debug bool, plotsDi
 	p.SetXLabel("Completion time (secs)")
 	p.SetYLabel("Delay time (secs)")
 	p.CheckedCmd("set y2label 'Number of units'")
+	p.CheckedCmd("set ytics nomirror")
+	p.CheckedCmd("set y2tics")
 	p.SetStyle("dots")
 	for _, stats := range stats.Start {
 		valuesX = append(valuesX, stats.CompletionTime)
