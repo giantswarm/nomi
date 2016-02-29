@@ -62,3 +62,7 @@ contribution workflow as well as reporting bugs.
 ## License
 
 Nomi is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
+
+## Origin of the Name
+
+`nomi` (のみ[蚤]) is Japanese for [flea](https://en.wikipedia.org/wiki/Flea).
