@@ -116,7 +116,7 @@ $ docker run -ti \
     -v /var/run/fleet.sock:/var/run/fleet.sock \
     --net=host \
     --pid=host \
-    giantswarm/nomi:latest \
+    giantswarm/nomi:latest run \
     --addr=192.68.10.101:54541 \
     --generate-gnuplots \
     --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
@@ -163,8 +163,7 @@ $ docker run -ti \
   -v /var/run/fleet.sock:/var/run/fleet.sock \
   --net=host \
   --pid=host \
-  giantswarm/nomi \
-  run \
+  giantswarm/nomi:latest run \
   --addr=192.68.10.101:54541 \
   --generate-plots \
   --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
