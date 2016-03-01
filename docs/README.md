@@ -6,18 +6,18 @@ Nomi is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet
 
 - `--use-docker`: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers. At this moment, we deploy a standard container that use a simple Linux Alpine image.
 - `--use-rkt`: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers. At this moment, we deploy a standard aci which is based in a simple Linux Alpine image.
-- `--addr`: address to listen events from the deployed units. This parameter is **important** to allow units notify Nomi when they change their state. Nomi extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this parameter when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
+- `--addr`: address to listen events from the deployed units. This argument is **important** to allow units notify Nomi when they change their state. Nomi extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this argument when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
 - `--dump-json`: dump JSON collected metrics to stdout.
 - `--dump-html-tar`: dump tarred HTML stats to stdout.
 - `--benchmark-file`: YAML file with the actions to be triggered and the size of the instance groups.
-- `--raw-instructions`: benchmark raw instructions to be triggered, (requires `instancegroup-size` parameter) and the size of the instance groups.
+- `--raw-instructions`: benchmark raw instructions to be triggered, (requires the `--instancegroup-size` argument) and the size of the instance groups.
 - `--instancegroup-size`: size of the instance group in terms of units, (only if you use `raw-instructions`).
 - `--generate-gnuplots`: generate gnuplots out of the collected metrics. It is preferable to use `raw-instructions` instead of `benchmark-file` to avoid specifying a docker volume to pass a YAML benchmark definition.
     - **Important:** You have to run Nomi as a Docker container in your CoreOS machine.
 
 ## Benchmark file definition
 
-To start benchmarking our fleet cluster we need to define, which actions our benchmark will perform against a cluster. To do so we can use `--raw-instructions` or `--benchmark-file` parameters.
+To start benchmarking our fleet cluster we need to define which actions our benchmark will perform against a cluster. To do so we can use `--raw-instructions` or pass a YAML benchmark file via the `--benchmark-file` argument.
 
 ### Benchmark YAML file format
 
@@ -76,9 +76,14 @@ $ nomi run \
     --use-rkt
 ```
 
-Using `raw-instructions` and `instancegroup-size` parameters to run a benchmark that deploys raw systemd units:
+Using `--raw-instructions` and `--instancegroup-size` arguments to run a benchmark that deploys raw systemd units:
 
-`nomi run --instancegroup-size=1 --dump-json --raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)"`
+```nohighlight
+$ nomi run \
+    --instancegroup-size=1 \
+    --dump-json \
+    --raw-instructions="(sleep 1) (start 200 100) (sleep 200) (stop-all)"
+```
 
 ### Running Nomi from source
 
