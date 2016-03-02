@@ -1,0 +1,14 @@
+application:
+ name: helloworld
+ image: docker://giantswarm/helloworld
+ type: rkt
+ ports:
+   - 8080
+instancegroup-size: 1
+instructions:
+  - sleep: 1
+  - start:
+     max: 1
+     interval: 100
+  - sleep: 200
+  - stop: stop-all

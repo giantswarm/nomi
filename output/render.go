@@ -83,7 +83,7 @@ func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirecto
 			p.PlotXY(valuesX, valuesY, fmt.Sprintf("%s - Time/CPU", hostname), "")
 		}
 		p.SetXLabel("Timestamp (secs)")
-		p.SetYLabel("CPU usage (%)")
+		p.SetYLabel("CPU usage (per)")
 		p.CheckedCmd("set terminal pdf")
 
 		if debug {

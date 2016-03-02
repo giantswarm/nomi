@@ -52,7 +52,18 @@ type Instruction struct {
 }
 type Instructions []Instruction
 
+type Application struct {
+	Name    string
+	Image   string
+	Type    string
+	Volumes []string
+	Ports   []int
+	Args    []string
+	Envs    map[string]string
+}
+
 type BenchmarkDef struct {
+	Application       Application
 	Instructions      Instructions
 	InstanceGroupSize int `yaml:"instancegroup-size"`
 }

@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	beaconUnitPrefix = "beaconX"
-
 	listenerDefaultIP   = "127.0.0.1"
 	listenerDefaultPort = "40302"
 )
@@ -121,24 +119,29 @@ func runRun(cmd *cobra.Command, args []string) {
 		log.Logger().Fatal(err)
 	}
 
-	observer := unit.NewBeaconObserver(unitEngine)
+	builder, err := unit.NewBuilder(benchmark.Application, unitEngine.InstanceGroupSize(), runFlags.listenAddr, runFlags.useDocker, runFlags.useRkt)
+	if err != nil {
+		log.Logger().Fatal(err)
+	}
+
+	observer := unit.NewUnitObserver(unitEngine)
 	observer.StartHTTPService(runFlags.listenAddr)
 
-	fleetPool.StartUnit(unit.MakeStatsDumper("fleetd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -C fleetd 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "fleetd", runFlags.listenAddr))
-	fleetPool.StartUnit(unit.MakeStatsDumper("systemd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -p 1 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "systemd", runFlags.listenAddr))
+	fleetPool.StartUnit(builder.MakeStatsDumper("fleetd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -C fleetd 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "fleetd"))
+	fleetPool.StartUnit(builder.MakeStatsDumper("systemd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -p 1 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "systemd"))
 
 	unitEngine.SpawnFunc = func(id string) error {
 		if runFlags.verbose {
 			log.Logger().Infof("spawning unit with id %s\n", id)
 		}
-		return fleetPool.StartUnitGroup(unit.MakeUnitChain(id, runFlags.listenAddr, unitEngine.InstanceGroupSize(), runFlags.useDocker, runFlags.useRkt))
+		return fleetPool.StartUnitGroup(builder.MakeUnitChain(id))
 	}
 
 	unitEngine.StopFunc = func(id string) error {
 		if runFlags.verbose {
 			log.Logger().Infof("stopping unit with id %s\n", id)
 		}
-		return fleetPool.Stop(beaconUnitPrefix + "-0@" + id + ".service")
+		return fleetPool.Stop(builder.GetUnitPrefix() + "-0@" + id + ".service")
 	}
 
 	unitEngine.Run()
@@ -150,7 +153,7 @@ func runRun(cmd *cobra.Command, args []string) {
 
 	wg := new(sync.WaitGroup)
 	for _, unit := range existingUnits {
-		if strings.HasPrefix(unit.Name, beaconUnitPrefix) {
+		if strings.HasPrefix(unit.Name, builder.GetUnitPrefix()) {
 			wg.Add(1)
 			go func(unitName string) {
 				if runFlags.verbose {
