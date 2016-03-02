@@ -127,6 +127,7 @@ func runRun(cmd *cobra.Command, args []string) {
 	observer := unit.NewUnitObserver(unitEngine)
 	observer.StartHTTPService(runFlags.listenAddr)
 
+	fleetPool.StartUnit(builder.MakeStatsDumper("etcd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -C etcd 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "etcd"))
 	fleetPool.StartUnit(builder.MakeStatsDumper("fleetd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -C fleetd 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "fleetd"))
 	fleetPool.StartUnit(builder.MakeStatsDumper("systemd", "echo `hostname` `docker run --rm --pid=host ragnarb/toolbox pidstat -h -r -u -p 1 10 1 | tail -n 1 | awk \\'{print $7 \" \" $12}\\'`", "systemd"))
 

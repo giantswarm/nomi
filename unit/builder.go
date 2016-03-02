@@ -131,6 +131,7 @@ func (b *Builder) buildDockerService() []*schema.UnitOption {
 		ports := ""
 		envs := ""
 		vols := ""
+		net := ""
 		for _, port := range b.app.Ports {
 			ports = ports + fmt.Sprintf(" -p :%d", port)
 		}
@@ -140,7 +141,10 @@ func (b *Builder) buildDockerService() []*schema.UnitOption {
 		for key, value := range b.app.Envs {
 			envs = envs + fmt.Sprintf(" -e %s=%s", key, value)
 		}
-		dockerExec = "/usr/bin/docker run --net=host --rm" + vols + ports + envs + " --name %p-%i " + b.app.Image + " " + strings.Join(b.app.Args[:], " ")
+		if b.app.Network != "" {
+			net = " --net=" + b.app.Network
+		}
+		dockerExec = "/usr/bin/docker run --rm" + net + vols + ports + envs + " --name %p-%i " + b.app.Image + " " + strings.Join(b.app.Args[:], " ")
 	}
 
 	unit := []*schema.UnitOption{
@@ -191,6 +195,7 @@ func (b *Builder) buildRktService() []*schema.UnitOption {
 		envs := ""
 		vols := ""
 		args := ""
+		net := ""
 		for _, port := range b.app.Ports {
 			if strings.Contains(b.app.Image, "docker://") {
 				ports = ports + fmt.Sprintf(" --port=%d-tcp:%d", port, port)
@@ -207,7 +212,10 @@ func (b *Builder) buildRktService() []*schema.UnitOption {
 		if len(b.app.Args[:]) > 0 {
 			args = "--exec=" + strings.Join(b.app.Args[:], " -- ")
 		}
-		rktExec = "/usr/bin/rkt --uuid-file-save=/run/rkt-uuids/%p-%i --insecure-skip-verify run --net=host" + vols + ports + envs + " " + b.app.Image + " " + args
+		if b.app.Network != "" {
+			net = " --net=" + b.app.Network
+		}
+		rktExec = "/usr/bin/rkt --uuid-file-save=/run/rkt-uuids/%p-%i --insecure-skip-verify run " + net + vols + ports + envs + " " + b.app.Image + " " + args
 	}
 
 	unit := []*schema.UnitOption{

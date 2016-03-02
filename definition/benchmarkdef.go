@@ -56,6 +56,7 @@ type Application struct {
 	Name    string
 	Image   string
 	Type    string
+	Network string
 	Volumes []string
 	Ports   []int
 	Args    []string

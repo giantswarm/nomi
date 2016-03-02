@@ -32,6 +32,7 @@ application:
  volumes: ["/usr/lib/vol1", "/usr/lib/vol2"]
  ports: [9090, 8080]
  args: ["sleep", "9000"]
+ network: host
  envs:
   x1: value1
   x2: value2
@@ -152,6 +153,7 @@ func TestApplicationYAMLDefinition(t *testing.T) {
 		Args:    []string{"sleep", "9000"},
 		Volumes: []string{"/usr/lib/vol1", "/usr/lib/vol2"},
 		Ports:   []int{9090, 8080},
+		Network: "host",
 		Envs:    make(map[string]string),
 	}
 	expected.Envs["x1"] = "value1"
@@ -167,6 +169,10 @@ func TestApplicationYAMLDefinition(t *testing.T) {
 
 	if ins.Application.Type != expected.Type {
 		log.Fatalf("application type is wrong %v expected %v", ins.Application.Type, expected.Type)
+	}
+
+	if ins.Application.Network != expected.Network {
+		log.Fatalf("application network is wrong %v expected %v", ins.Application.Network, expected.Network)
 	}
 
 	if len(ins.Application.Ports) != len(expected.Ports) && ins.Application.Ports[0] != expected.Ports[0] {

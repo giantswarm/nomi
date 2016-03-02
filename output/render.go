@@ -15,7 +15,7 @@ import (
 // Directory where the plots are stored by default
 const plotsDIR = "/nomi_plots"
 
-var processTypes = []string{"fleetd", "systemd"}
+var processTypes = []string{"fleetd", "systemd", "etcd"}
 
 // GeneratePlots creates some initial plots from the collected metrics. Three
 // are the initial plots: start operation completion time/delay, stop operation
