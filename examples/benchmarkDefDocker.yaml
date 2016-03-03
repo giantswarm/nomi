@@ -7,7 +7,7 @@ application:
  args:
    - sh
    - "-c"
-   - "echo \"Hello world\" \u003e index.html \u0026\u0026 exec python3 -m http.server"
+   - "echo \"Hello world\" > index.html && exec python3 -m http.server"
 instancegroup-size: 1
 instructions:
   - sleep: 1
