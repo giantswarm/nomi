@@ -31,6 +31,7 @@ type runCmdFlags struct {
 	verbose         bool
 	useDocker       bool
 	useRkt          bool
+	unitFile        string
 }
 
 func (f runCmdFlags) Validate() {
@@ -79,6 +80,7 @@ func init() {
 	runCmd.Flags().BoolVar(&runFlags.useDocker, "use-docker", false, "use systemd units that deploy docker containers")
 	runCmd.Flags().BoolVar(&runFlags.useRkt, "use-rkt", false, "use systemd units that deploy rkt containers")
 	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/nomi_plots)")
+	runCmd.Flags().StringVar(&runFlags.unitFile, "unitfile-service", "", "fleet unit file to create a fleet service")
 	runCmd.Flags().IntVar(&runFlags.igSize, "instancegroup-size", 1, "instance group size")
 }
 
@@ -124,6 +126,13 @@ func runRun(cmd *cobra.Command, args []string) {
 		log.Logger().Fatal(err)
 	}
 
+	if runFlags.unitFile != "" {
+		err = builder.UseCustomUnitFileService(runFlags.unitFile)
+		if err != nil {
+			log.Logger().Fatal("unable to parse unit file in unitfile-service")
+		}
+	}
+
 	observer := unit.NewUnitObserver(unitEngine)
 	observer.StartHTTPService(runFlags.listenAddr)
 
@@ -167,11 +176,15 @@ func runRun(cmd *cobra.Command, args []string) {
 	}
 	wg.Wait()
 
-	if runFlags.dumpJSONFlag {
+	generateBenchmarkReport(runFlags.dumpJSONFlag, runFlags.dumpHTMLTarFlag, runFlags.generatePlots, unitEngine)
+}
+
+func generateBenchmarkReport(dumpJSONFlag, dumpHTMLTarFlag, generatePlots bool, unitEngine *unit.UnitEngine) {
+	if dumpJSONFlag {
 		output.DumpJSON(unitEngine.Stats())
 	}
 
-	if runFlags.dumpHTMLTarFlag {
+	if dumpHTMLTarFlag {
 		html, err := output.Asset("output/embedded/render.html")
 		if err != nil {
 			log.Logger().Fatal(err)
@@ -185,7 +198,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		output.DumpHTMLTar(html, scriptJs, unitEngine.Stats())
 	}
 
-	if runFlags.generatePlots {
+	if generatePlots {
 		output.GeneratePlots(unitEngine.Stats(), runFlags.verbose)
 	}
 

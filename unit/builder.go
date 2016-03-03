@@ -3,11 +3,15 @@ package unit
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/coreos/fleet/schema"
+	"github.com/coreos/fleet/unit"
 
 	"github.com/giantswarm/nomi/definition"
+	"github.com/giantswarm/nomi/log"
 )
 
 const (
@@ -23,6 +27,7 @@ type Builder struct {
 	useRktService     bool
 	app               definition.Application
 	instanceGroupSize int
+	unitFile          *unit.UnitFile
 }
 
 func NewBuilder(app definition.Application, instanceGroupSize int, listenAddr string, useDockerService bool, useRktService bool) (*Builder, error) {
@@ -83,12 +88,14 @@ func (b *Builder) MakeUnitChain(id string) []schema.Unit {
 		unit := schema.Unit{
 			Name: name,
 		}
-		if b.useDockerService || b.app.Type == "docker" {
+		if b.unitFile != nil {
+			unit.Options = b.buildCustomService()
+		} else if b.useDockerService || b.app.Type == "docker" {
 			unit.Options = b.buildDockerService()
 		} else if b.useRktService || b.app.Type == "rkt" {
 			unit.Options = b.buildRktService()
 		} else {
-			unit.Options = b.buildDefaultService()
+			unit.Options = b.buildShellService()
 		}
 
 		if i > 0 {
@@ -125,26 +132,50 @@ func (b *Builder) MakeUnitChain(id string) []schema.Unit {
 	return unitsList
 }
 
+func (b *Builder) UseCustomUnitFileService(filePath string) error {
+	filename, _ := filepath.Abs(filePath)
+	unitFile, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Logger().Errorf("unable to read yaml file %v", err)
+		return err
+	}
+	contents := string(unitFile)
+	if strings.Contains(contents, "Global=true") {
+		log.Logger().Warningf("Global fleet scheduling option 'Global=true' can cause undesired results")
+	}
+
+	b.unitFile, err = unit.NewUnitFile(contents)
+	if err != nil {
+		log.Logger().Errorf("error creating Unit from %q: %v", contents, err)
+		return err
+	}
+	return nil
+}
+
+func (b *Builder) generateDockerRunCmd() string {
+	ports := ""
+	envs := ""
+	vols := ""
+	net := ""
+	for _, port := range b.app.Ports {
+		ports = ports + fmt.Sprintf(" -p :%d", port)
+	}
+	for _, vol := range b.app.Volumes {
+		vols = vols + fmt.Sprintf(" -v %s:%s", vol.Source, vol.Target)
+	}
+	for key, value := range b.app.Envs {
+		envs = envs + fmt.Sprintf(" -e %s=%s", key, value)
+	}
+	if b.app.Network != "" {
+		net = " --net=" + b.app.Network
+	}
+	return "/usr/bin/docker run --rm" + net + vols + ports + envs + " --name %p-%i " + b.app.Image + " " + strings.Join(b.app.Args[:], " ")
+}
+
 func (b *Builder) buildDockerService() []*schema.UnitOption {
 	dockerExec := "/usr/bin/docker run --net=host --rm --name %p-%i giantswarm/alpine-curl sleep 90000"
 	if b.app.Image != "" {
-		ports := ""
-		envs := ""
-		vols := ""
-		net := ""
-		for _, port := range b.app.Ports {
-			ports = ports + fmt.Sprintf(" -p :%d", port)
-		}
-		for _, vol := range b.app.Volumes {
-			vols = vols + fmt.Sprintf(" -v %s:%s", vol, vol)
-		}
-		for key, value := range b.app.Envs {
-			envs = envs + fmt.Sprintf(" -e %s=%s", key, value)
-		}
-		if b.app.Network != "" {
-			net = " --net=" + b.app.Network
-		}
-		dockerExec = "/usr/bin/docker run --rm" + net + vols + ports + envs + " --name %p-%i " + b.app.Image + " " + strings.Join(b.app.Args[:], " ")
+		dockerExec = b.generateDockerRunCmd()
 	}
 
 	unit := []*schema.UnitOption{
@@ -188,34 +219,39 @@ func (b *Builder) buildDockerService() []*schema.UnitOption {
 	return unit
 }
 
+func (b *Builder) generateRktRunCmd() string {
+	ports := ""
+	envs := ""
+	vols := ""
+	args := ""
+	net := ""
+	for _, port := range b.app.Ports {
+		if strings.Contains(b.app.Image, "docker://") {
+			ports = ports + fmt.Sprintf(" --port=%d-tcp:%d", port, port)
+		} else {
+			ports = ports + fmt.Sprintf(" --port=http:%d", port)
+		}
+	}
+	// TODO: This notation uses newer versions of rkt 1.0.0, older don't support '--mount'
+	for id, vol := range b.app.Volumes {
+		vols = vols + fmt.Sprintf(" --volume=vol%d,kind=host,source=%s --mount=volume=vol%d,target=%s", id, vol.Source, id, vol.Target)
+	}
+	for key, value := range b.app.Envs {
+		envs = envs + fmt.Sprintf(" --set-env=%s=%s", key, value)
+	}
+	if len(b.app.Args[:]) > 0 {
+		args = "--exec=" + strings.Join(b.app.Args[:], " -- ")
+	}
+	if b.app.Network != "" {
+		net = " --net=" + b.app.Network
+	}
+	return "/usr/bin/rkt --uuid-file-save=/run/rkt-uuids/%p-%i --insecure-skip-verify run " + net + vols + ports + envs + " " + b.app.Image + " " + args
+}
+
 func (b *Builder) buildRktService() []*schema.UnitOption {
 	rktExec := "/usr/bin/rkt --uuid-file-save=/run/rkt-uuids/%p-%i --insecure-skip-verify run --net=host " + rktTestImage + " --exec=/bin/sleep -- 90000"
 	if b.app.Image != "" {
-		ports := ""
-		envs := ""
-		vols := ""
-		args := ""
-		net := ""
-		for _, port := range b.app.Ports {
-			if strings.Contains(b.app.Image, "docker://") {
-				ports = ports + fmt.Sprintf(" --port=%d-tcp:%d", port, port)
-			} else {
-				ports = ports + fmt.Sprintf(" --port=http:%d", port)
-			}
-		}
-		for id, vol := range b.app.Volumes {
-			vols = vols + fmt.Sprintf(" --volume=vol%d,kind=host,source=%s --mount=volume=vol%d,target=%s", id, vol, id, vol)
-		}
-		for key, value := range b.app.Envs {
-			envs = envs + fmt.Sprintf(" --set-env=%s=%s", key, value)
-		}
-		if len(b.app.Args[:]) > 0 {
-			args = "--exec=" + strings.Join(b.app.Args[:], " -- ")
-		}
-		if b.app.Network != "" {
-			net = " --net=" + b.app.Network
-		}
-		rktExec = "/usr/bin/rkt --uuid-file-save=/run/rkt-uuids/%p-%i --insecure-skip-verify run " + net + vols + ports + envs + " " + b.app.Image + " " + args
+		rktExec = b.generateRktRunCmd()
 	}
 
 	unit := []*schema.UnitOption{
@@ -254,7 +290,7 @@ func (b *Builder) buildRktService() []*schema.UnitOption {
 	return unit
 }
 
-func (b *Builder) buildDefaultService() []*schema.UnitOption {
+func (b *Builder) buildShellService() []*schema.UnitOption {
 	return []*schema.UnitOption{
 		{
 			Section: "Service",
@@ -282,4 +318,25 @@ func (b *Builder) buildDefaultService() []*schema.UnitOption {
 			Value:   "/usr/bin/curl -s http://" + b.listenAddr + "/bye/%i",
 		},
 	}
+}
+
+func (b *Builder) buildCustomService() []*schema.UnitOption {
+	unitOptions := schema.MapUnitFileToSchemaUnitOptions(b.unitFile)
+
+	nomiNotifiers := []*schema.UnitOption{
+		{
+			Section: "Service",
+			Name:    "ExecStartPre",
+			Value:   "/bin/sh -c '/usr/bin/curl -s http://" + b.listenAddr + "/hello/%i'",
+		},
+		{
+			Section: "Service",
+			Name:    "ExecStopPost",
+			Value:   "/usr/bin/curl -s http://" + b.listenAddr + "/bye/%i",
+		},
+	}
+
+	unitOptions = append(unitOptions, nomiNotifiers...)
+
+	return unitOptions
 }
