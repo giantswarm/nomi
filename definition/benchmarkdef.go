@@ -57,10 +57,17 @@ type Application struct {
 	Image   string
 	Type    string
 	Network string
-	Volumes []string
+	Volumes Volumes
 	Ports   []int
 	Args    []string
 	Envs    map[string]string
+}
+
+type Volumes []Volume
+
+type Volume struct {
+	Source string
+	Target string
 }
 
 type BenchmarkDef struct {

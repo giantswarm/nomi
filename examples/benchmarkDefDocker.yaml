@@ -8,6 +8,12 @@ application:
    - sh
    - "-c"
    - "echo \"Hello world\" > index.html && exec python3 -m http.server"
+ volumes:
+  - source: /tmp
+    target: /home
+ envs:
+   var1: test1
+   var2: test2
 instancegroup-size: 1
 instructions:
   - sleep: 1

@@ -29,7 +29,11 @@ application:
  name: helloworld
  image: alpine-curl
  type: docker
- volumes: ["/usr/lib/vol1", "/usr/lib/vol2"]
+ volumes:
+  - source: /usr/lib/vol1
+    target: /usr/dest/vol1
+  - source: /usr/lib/vol2
+    target: /usr/dest/vol2
  ports: [9090, 8080]
  args: ["sleep", "9000"]
  network: host
@@ -145,13 +149,23 @@ func TestApplicationYAMLDefinition(t *testing.T) {
 	if len(ins.Instructions) != 5 {
 		log.Fatalf("instructions size is wrong %d expected 3", len(ins.Instructions))
 	}
+	vols := []Volume{
+		{
+			Source: "/usr/lib/vol1",
+			Target: "/usr/dest/vol1",
+		},
+		{
+			Source: "/usr/lib/vol2",
+			Target: "/usr/dest/vol2",
+		},
+	}
 
 	expected := &Application{
 		Name:    "helloword",
 		Image:   "alpine-curl",
 		Type:    "docker",
 		Args:    []string{"sleep", "9000"},
-		Volumes: []string{"/usr/lib/vol1", "/usr/lib/vol2"},
+		Volumes: vols,
 		Ports:   []int{9090, 8080},
 		Network: "host",
 		Envs:    make(map[string]string),
@@ -175,19 +189,19 @@ func TestApplicationYAMLDefinition(t *testing.T) {
 		log.Fatalf("application network is wrong %v expected %v", ins.Application.Network, expected.Network)
 	}
 
-	if len(ins.Application.Ports) != len(expected.Ports) && ins.Application.Ports[0] != expected.Ports[0] {
+	if len(ins.Application.Ports) != len(expected.Ports) || ins.Application.Ports[0] != expected.Ports[0] {
 		log.Fatalf("application ports is wrong %v expected %v", ins.Application.Ports, expected.Ports)
 	}
 
-	if len(ins.Application.Args) != len(expected.Args) && ins.Application.Args[0] != expected.Args[0] {
+	if len(ins.Application.Args) != len(expected.Args) || ins.Application.Args[0] != expected.Args[0] {
 		log.Fatalf("application args is wrong %v expected %v", ins.Application.Args, expected.Args)
 	}
 
-	if len(ins.Application.Volumes) != len(expected.Volumes) && ins.Application.Volumes[0] != expected.Volumes[0] {
-		log.Fatalf("application volumes is wrong %v expected %v", ins.Application.Volumes, expected.Volumes)
+	if len(ins.Application.Envs) != len(expected.Envs) || ins.Application.Envs["x1"] != expected.Envs["x1"] {
+		log.Fatalf("application environment variable is wrong %v expected %v", ins.Application.Envs["x1"], expected.Envs["x1"])
 	}
 
-	if len(ins.Application.Envs) != len(expected.Envs) && ins.Application.Envs["x1"] != expected.Envs["x1"] {
-		log.Fatalf("application environment variable is wrong %v expected %v", ins.Application.Envs["x1"], expected.Envs["x1"])
+	if len(ins.Application.Volumes) != len(expected.Volumes) || ins.Application.Volumes[1].Source != "/usr/lib/vol2" {
+		log.Fatalf("application volumes is wrong %v expected %v", ins.Application.Volumes, expected.Volumes)
 	}
 }
