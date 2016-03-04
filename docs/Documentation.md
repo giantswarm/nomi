@@ -31,7 +31,7 @@ In the following, we detail the purpose of each of the elements that composes a 
   - **type**: used to specify whether a deployed container would be [rkt](https://github.com/coreos/rkt) or [docker](https://github.com/docker/docker).
   - **network**: indicates the type of network to be used in our containers `host|none|default`, as analogous to the network types defined in [rkt](https://github.com/coreos/rkt) and [docker](https://github.com/docker/docker).
   - **volumes**: list of volumes to be defined in the container.
-    - **source**: path of source of the volume in the host.
+    - **source**: path of source of the volume on the host.
     - **target**: path of destination for the volume inside the container.
   - **envs**: list of pairs `(key: value)` to define environment variables inside the container.
   - **ports**: lists of ports to declare in the container engine.
