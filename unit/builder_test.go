@@ -3,11 +3,18 @@ package unit
 import (
 	"log"
 	"testing"
+
+	"github.com/giantswarm/nomi/definition"
 )
 
 func TestBuilder(t *testing.T) {
 	// check basic configuration
-	units1 := MakeUnitChain("1", "127.0.0.1:54541", 1, false, false)
+	app := definition.Application{}
+	builder, err := NewBuilder(app, 1, "127.0.0.1:54541", false, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	units1 := builder.MakeUnitChain("1")
 	if units1[0].Name != "beaconX-0@1.service" {
 		log.Fatalf("wrong unit name expected 'beaconX-0@1.service' got: %s", units1[0].Name)
 	}
@@ -17,7 +24,8 @@ func TestBuilder(t *testing.T) {
 	}
 
 	// check Docker configuration
-	units2 := MakeUnitChain("1", "127.0.0.1:54541", 1, true, false)
+	builder, err = NewBuilder(app, 1, "127.0.0.1:54541", true, false)
+	units2 := builder.MakeUnitChain("1")
 	if units2[0].Name != "beaconX-0@1.service" {
 		log.Fatalf("wrong unit name expected 'beaconX-0@1.service' got: %s", units2[0].Name)
 	}
@@ -27,7 +35,8 @@ func TestBuilder(t *testing.T) {
 	}
 
 	// check rkt configuration
-	units3 := MakeUnitChain("1", "127.0.0.1:54541", 1, false, true)
+	builder, err = NewBuilder(app, 1, "127.0.0.1:54541", false, true)
+	units3 := builder.MakeUnitChain("1")
 	if units3[0].Name != "beaconX-0@1.service" {
 		log.Fatalf("wrong unit name expected 'beaconX-0@1.service' got: %s", units3[0].Name)
 	}

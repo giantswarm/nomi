@@ -4,8 +4,6 @@ Nomi is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet
 
 ## Command line arguments
 
-- `--use-docker`: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers. At this moment, we deploy a standard container that use a simple Linux Alpine image.
-- `--use-rkt`: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers. At this moment, we deploy a standard aci which is based in a simple Linux Alpine image.
 - `--addr`: address to listen events from the deployed units. This argument is **important** to allow units notify Nomi when they change their state. Nomi extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this argument when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
 - `--dump-json`: dump JSON collected metrics to stdout.
 - `--dump-html-tar`: dump tarred HTML stats to stdout.
@@ -14,15 +12,29 @@ Nomi is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet
 - `--instancegroup-size`: size of the instance group in terms of units, (only if you use `raw-instructions`).
 - `--generate-gnuplots`: generate gnuplots out of the collected metrics. It is preferable to use `raw-instructions` instead of `benchmark-file` to avoid specifying a docker volume to pass a YAML benchmark definition.
     - **Important:** You have to run Nomi as a Docker container in your CoreOS machine.
+- `unitfile-service`: fleet unit file of type service to be used as benchmark unit.
+- `use-docker`: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers. If no container image and type is defined in `benchmark-file`, we deploy a standard container that use a simple Linux Alpine image.
+- `use-rkt`: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers. If no container image and type is defined in `benchmark-file`, we deploy a standard aci which is based in a simple Linux Alpine image.
 
 ## Benchmark file definition
 
-To start benchmarking our fleet cluster we need to define which actions our benchmark will perform against a cluster. To do so we can use `--raw-instructions` or pass a YAML benchmark file via the `--benchmark-file` argument.
+To start benchmarking our fleet cluster we need to define which actions our benchmark will perform against a cluster. To do so we can use `--raw-instructions` or pass a YAML benchmark file via the `--benchmark-file` argument. If you want to use a custom docker/rkt container, execution options can be defined using the `benchmark-file`, such as `image`, `volumes`, `ports`, environment variables, execution arguments and so forth.
 
 ### Benchmark YAML file format
 
 In the following, we detail the purpose of each of the elements that composes a benchmark definition. This file is expected to be a YAML file that follows the format below.
 
+- `application`:
+  - `name`: name to be used as prefix in our fleet units.
+  - `image`: specifies the [docker](https://github.com/docker/docker) image or url to a [rkt](https://github.com/coreos/rkt) container definition.
+  - `type`: used to specify whether a deployed container would be [rkt](https://github.com/coreos/rkt) or [docker](https://github.com/docker/docker).
+  - `network`: indicates the type of network to be used in our containers `host|none|default`, as analogous to the network types defined in [rkt](https://github.com/coreos/rkt) and [docker](https://github.com/docker/docker).
+  - `volumes`: list of volumes to be defined in the container.
+    - `source`: path of source of the volume on the host.
+    - `target`: path of destination for the volume inside the container.
+  - `envs`: list of pairs `(key: value)` to define environment variables inside the container.
+  - `ports`: lists of ports to declare in the container engine.
+  - `args`: list of execution arguments to be passed as arguments to the container.
 - `instancegroup-size`: indicates the amount of units that will conform an instance group.
 - `instructions`: contains a list of instructions that will be executed in descending order. Each instruction can optionally have one of the following elements:
     - `start`:
@@ -42,6 +54,22 @@ In the following, we detail the purpose of each of the elements that composes a 
 **Example:**
 
 ```yaml
+name: helloworld
+image: giantswarm/helloworld
+type: docker
+network: host
+ports:
+  - 8000
+args:
+  - sh
+  - "-c"
+  - "echo \"Hello world\" > index.html && exec python3 -m http.server"
+volumes:
+ - source: /tmp
+   target: /home
+envs:
+  var1: test1
+  var2: test2
 instancegroup-size: 1
 instructions:
   - start:
@@ -74,6 +102,24 @@ $ nomi run \
     --dump-json \
     --benchmark-file="./examples/sample01.yaml" \
     --use-rkt
+```
+
+Using a benchmark YAML file to run a custom rkt container:
+
+```nohighlight
+$ nomi run \
+     --instancegroup-size=1 \
+     --dump-json \
+     --benchmark-file="./examples/benchmarkDefRkt.yaml"
+```
+
+Using a benchmark that uses a custom fleet unit service's file:
+
+```nohighlight
+$ nomi run \
+    --dump-json \
+    --benchmark-file="./examples/benchmarkDef01.yaml" \
+    --unitfile-service=./examples/benchmarkDefUnitFile.service
 ```
 
 Using `--raw-instructions` and `--instancegroup-size` arguments to run a benchmark that deploys raw systemd units:
