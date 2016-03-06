@@ -53,14 +53,15 @@ type Instruction struct {
 type Instructions []Instruction
 
 type Application struct {
-	Name    string
-	Image   string
-	Type    string
-	Network string
-	Volumes Volumes
-	Ports   []int
-	Args    []string
-	Envs    map[string]string
+	Name         string
+	Image        string
+	Type         string
+	Network      string
+	Volumes      Volumes
+	Ports        []int
+	Args         []string
+	Envs         map[string]string
+	UnitFilePath string `yaml:"unitfile-path"`
 }
 
 type Volumes []Volume
@@ -220,6 +221,23 @@ func parseBenchmarkDef(filePath string) (BenchmarkDef, error) {
 func validateDefinition(benchmark BenchmarkDef) bool {
 	if benchmark.InstanceGroupSize <= 0 {
 		log.Logger().Fatal("instance group size has to be greater or equal to 1")
+	}
+
+	// Validate application definition
+	if benchmark.Application.Type == "" {
+		log.Logger().Errorf("wrong application type %v", benchmark.Application.Type)
+		return false
+	}
+	if benchmark.Application.Type != "unitfiles" || benchmark.Application.Type != "docker" || benchmark.Application.Type != "rkt" {
+		log.Logger().Errorf("wrong application type %v", benchmark.Application.Type)
+		return false
+	}
+	if benchmark.Application.Type == "unitfiles" && benchmark.Application.UnitFilePath == "" {
+		log.Logger().Errorf("application unit file path is required for type %v", benchmark.Application.Type)
+		return false
+	}
+	if benchmark.Application.Image == "" && benchmark.Application.Type == "docker" && benchmark.Application.Type == "rkt" {
+		log.Logger().Warning("application image is empty using standard container")
 	}
 	emptyInstruction := &Instruction{}
 

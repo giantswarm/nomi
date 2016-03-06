@@ -24,6 +24,13 @@ instructions:
   - stop: stop-all
 `
 
+var dataAppUnitFiles = `
+application:
+ name: helloworld
+ unitfile-path: /tmp/test.service
+ type: unitfiles
+instancegroup-size: 1
+`
 var dataAppTest = `
 application:
  name: helloworld
@@ -203,5 +210,30 @@ func TestApplicationYAMLDefinition(t *testing.T) {
 
 	if len(ins.Application.Volumes) != len(expected.Volumes) || ins.Application.Volumes[1].Source != "/usr/lib/vol2" {
 		log.Fatalf("application volumes is wrong %v expected %v", ins.Application.Volumes, expected.Volumes)
+	}
+}
+
+func TestApplicationUnitFileYAMLDefinition(t *testing.T) {
+	ins := BenchmarkDef{}
+
+	if err := yaml.Unmarshal([]byte(dataAppUnitFiles), &ins); err != nil {
+		log.Fatalf("unable to parse the yaml test definition: %v", err)
+	}
+
+	if ins.InstanceGroupSize != 1 {
+		log.Fatalf("wrong instance group size is wrong %d expected 1", ins.InstanceGroupSize)
+	}
+
+	expected := &Application{
+		Name:         "helloword",
+		UnitFilePath: "/tmp/test.service",
+	}
+
+	if reflect.DeepEqual(ins.Application.Name, expected.Name) {
+		log.Fatalf("application name is wrong %v expected %v", ins.Application.Name, expected.Name)
+	}
+
+	if ins.Application.UnitFilePath != expected.UnitFilePath {
+		log.Fatalf("application unit file path is wrong %v expected %v", ins.Application.UnitFilePath, expected.UnitFilePath)
 	}
 }

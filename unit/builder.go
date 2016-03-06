@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	beaconUnitPrefix = "beaconX"
+	nomiUnitPrefix = "nomi"
 
 	rktTestImage = "docker://giantswarm/alpine-curl"
 )
@@ -23,30 +23,26 @@ const (
 type Builder struct {
 	unitPrefix        string
 	listenAddr        string
-	useDockerService  bool
-	useRktService     bool
 	app               definition.Application
 	instanceGroupSize int
 	unitFile          *unit.UnitFile
 }
 
-func NewBuilder(app definition.Application, instanceGroupSize int, listenAddr string, useDockerService bool, useRktService bool) (*Builder, error) {
+func NewBuilder(app definition.Application, instanceGroupSize int, listenAddr string) (*Builder, error) {
 	unitPrefix := app.Name
 	if unitPrefix == "" {
-		unitPrefix = beaconUnitPrefix
+		unitPrefix = nomiUnitPrefix
 	}
 	return &Builder{
 		unitPrefix:        unitPrefix,
 		instanceGroupSize: instanceGroupSize,
 		listenAddr:        listenAddr,
-		useDockerService:  useDockerService,
-		useRktService:     useRktService,
 		app:               app,
 	}, nil
 }
 
 func (b *Builder) GetUnitPrefix() string {
-	prefix := beaconUnitPrefix
+	prefix := nomiUnitPrefix
 	if b.app.Name != "" {
 		prefix = b.app.Name
 	}
@@ -55,7 +51,7 @@ func (b *Builder) GetUnitPrefix() string {
 
 // MakeStatsDumper creates fleemer specific units to collect metrics in each host
 func (b *Builder) MakeStatsDumper(name, cmd, statsEndpoint string) schema.Unit {
-	prefix := beaconUnitPrefix
+	prefix := nomiUnitPrefix
 	if b.app.Name != "" {
 		prefix = b.app.Name
 	}
@@ -88,11 +84,11 @@ func (b *Builder) MakeUnitChain(id string) []schema.Unit {
 		unit := schema.Unit{
 			Name: name,
 		}
-		if b.unitFile != nil {
+		if b.app.Type == "unitfiles" && b.unitFile != nil {
 			unit.Options = b.buildCustomService()
-		} else if b.useDockerService || b.app.Type == "docker" {
+		} else if b.app.Type == "docker" {
 			unit.Options = b.buildDockerService()
-		} else if b.useRktService || b.app.Type == "rkt" {
+		} else if b.app.Type == "rkt" {
 			unit.Options = b.buildRktService()
 		} else {
 			unit.Options = b.buildShellService()

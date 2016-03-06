@@ -23,14 +23,10 @@ const (
 type runCmdFlags struct {
 	listenAddr      string
 	benchmarkFile   string
-	rawInstructions string
 	dumpJSONFlag    bool
 	dumpHTMLTarFlag bool
 	generatePlots   bool
-	igSize          int
 	verbose         bool
-	useDocker       bool
-	useRkt          bool
 	unitFile        string
 }
 
@@ -39,16 +35,8 @@ func (f runCmdFlags) Validate() {
 		log.Logger().Fatal("dump option is required. Please, choose between:  dump-json OR dump-html-tar")
 	}
 
-	if f.benchmarkFile == "" && f.rawInstructions == "" {
-		log.Logger().Fatal("benchmark file definition or raw instructions is required")
-	}
-
-	if f.benchmarkFile != "" && f.rawInstructions != "" {
-		log.Logger().Fatal("benchmark file definition or raw instructions are mutual exclusive")
-	}
-
-	if f.benchmarkFile == "" && f.rawInstructions != "" && f.igSize <= 0 {
-		log.Logger().Fatal("instance group size has to be greater than 0 when using raw-instructions parameter")
+	if f.benchmarkFile == "" {
+		log.Logger().Fatal("benchmark file definition is required")
 	}
 
 	if f.generatePlots {
@@ -72,16 +60,11 @@ var (
 
 func init() {
 	runCmd.Flags().StringVar(&runFlags.listenAddr, "addr", "", "address to listen")
-	runCmd.Flags().StringVar(&runFlags.benchmarkFile, "benchmark-file", "", "file with the benchmark definition (instance group size, instructions to spawn/stop/float units)")
-	runCmd.Flags().StringVar(&runFlags.rawInstructions, "raw-instructions", "", "instructions to spawn/stop/float units")
+	runCmd.Flags().StringVar(&runFlags.benchmarkFile, "benchmark-file", "", "file with the benchmark definition (application definition, instance group size, instructions to spawn/stop/float units)")
 	runCmd.Flags().BoolVar(&runFlags.dumpJSONFlag, "dump-json", false, "dump json stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.dumpHTMLTarFlag, "dump-html-tar", false, "dump tarred html stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.verbose, "verbose", false, "verbose output")
-	runCmd.Flags().BoolVar(&runFlags.useDocker, "use-docker", false, "use systemd units that deploy docker containers")
-	runCmd.Flags().BoolVar(&runFlags.useRkt, "use-rkt", false, "use systemd units that deploy rkt containers")
-	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/nomi_plots)")
-	runCmd.Flags().StringVar(&runFlags.unitFile, "unitfile-service", "", "fleet unit file to create a fleet service")
-	runCmd.Flags().IntVar(&runFlags.igSize, "instancegroup-size", 1, "instance group size")
+	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using gnuplot (output directory=/nomi_plots)")
 }
 
 func runRun(cmd *cobra.Command, args []string) {
@@ -104,14 +87,8 @@ func runRun(cmd *cobra.Command, args []string) {
 	}
 
 	var benchmark definition.BenchmarkDef
-	if runFlags.benchmarkFile == "" {
-		benchmark, err = definition.BenchmarkDefByRawInstructions(runFlags.rawInstructions, runFlags.igSize)
-		if err != nil {
-			log.Logger().Fatal("unable to parse the introduced raw instructions")
-		}
-	} else {
-		benchmark, err = definition.BenchmarkDefByFile(runFlags.benchmarkFile)
-	}
+	benchmark, err = definition.BenchmarkDefByFile(runFlags.benchmarkFile)
+
 	if err != nil {
 		log.Logger().Fatal(err)
 	}
@@ -121,15 +98,15 @@ func runRun(cmd *cobra.Command, args []string) {
 		log.Logger().Fatal(err)
 	}
 
-	builder, err := unit.NewBuilder(benchmark.Application, unitEngine.InstanceGroupSize(), runFlags.listenAddr, runFlags.useDocker, runFlags.useRkt)
+	builder, err := unit.NewBuilder(benchmark.Application, unitEngine.InstanceGroupSize(), runFlags.listenAddr)
 	if err != nil {
 		log.Logger().Fatal(err)
 	}
 
-	if runFlags.unitFile != "" {
-		err = builder.UseCustomUnitFileService(runFlags.unitFile)
+	if benchmark.Application.Type == "unitfiles" {
+		err = builder.UseCustomUnitFileService(benchmark.Application.UnitFilePath)
 		if err != nil {
-			log.Logger().Fatal("unable to parse unit file in unitfile-service")
+			log.Logger().Fatal("unable to parse unit file from your application definition")
 		}
 	}
 
