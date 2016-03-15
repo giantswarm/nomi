@@ -23,9 +23,11 @@ const (
 type runCmdFlags struct {
 	listenAddr      string
 	benchmarkFile   string
+	rawInstructions string
 	dumpJSONFlag    bool
 	dumpHTMLTarFlag bool
 	generatePlots   bool
+	igSize          int
 	verbose         bool
 	unitFile        string
 }
@@ -35,16 +37,25 @@ func (f runCmdFlags) Validate() {
 		log.Logger().Fatal("dump option is required. Please, choose between:  dump-json OR dump-html-tar")
 	}
 
-	if f.benchmarkFile == "" {
-		log.Logger().Fatal("benchmark file definition is required")
-	}
-
 	if f.generatePlots {
 		if _, err := exec.LookPath("gnuplot"); err != nil {
 			log.Logger().Infof("generate-gnuplots: could not find path to 'gnuplot':\n%v\n", err)
 			log.Logger().Fatal("generate-gnuplots option requires 'gnuplot' software installed")
 		}
 	}
+
+	if f.benchmarkFile == "" && f.rawInstructions == "" {
+		log.Logger().Fatal("benchmark file definition or raw instructions is required")
+	}
+
+	if f.benchmarkFile != "" && f.rawInstructions != "" {
+		log.Logger().Fatal("benchmark file definition or raw instructions are mutual exclusive")
+	}
+
+	if f.benchmarkFile == "" && f.rawInstructions != "" && f.igSize <= 0 {
+		log.Logger().Fatal("instance group size has to be greater than 0 when using raw-instructions parameter")
+	}
+
 }
 
 var (
@@ -61,10 +72,12 @@ var (
 func init() {
 	runCmd.Flags().StringVar(&runFlags.listenAddr, "addr", "", "address to listen")
 	runCmd.Flags().StringVar(&runFlags.benchmarkFile, "benchmark-file", "", "file with the benchmark definition (application definition, instance group size, instructions to spawn/stop/float units)")
+	runCmd.Flags().StringVar(&runFlags.rawInstructions, "raw-instructions", "", "instructions to spawn/stop/float units")
 	runCmd.Flags().BoolVar(&runFlags.dumpJSONFlag, "dump-json", false, "dump json stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.dumpHTMLTarFlag, "dump-html-tar", false, "dump tarred html stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.verbose, "verbose", false, "verbose output")
 	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using gnuplot (output directory=/nomi_plots)")
+	runCmd.Flags().IntVar(&runFlags.igSize, "instancegroup-size", 1, "instance group size")
 }
 
 func runRun(cmd *cobra.Command, args []string) {
@@ -87,7 +100,14 @@ func runRun(cmd *cobra.Command, args []string) {
 	}
 
 	var benchmark definition.BenchmarkDef
-	benchmark, err = definition.BenchmarkDefByFile(runFlags.benchmarkFile)
+	if runFlags.benchmarkFile == "" {
+		benchmark, err = definition.BenchmarkDefByRawInstructions(runFlags.rawInstructions, runFlags.igSize)
+		if err != nil {
+			log.Logger().Fatal("unable to parse the introduced raw instructions")
+		}
+	} else {
+		benchmark, err = definition.BenchmarkDefByFile(runFlags.benchmarkFile)
+	}
 
 	if err != nil {
 		log.Logger().Fatal(err)
