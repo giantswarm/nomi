@@ -224,11 +224,7 @@ func validateDefinition(benchmark BenchmarkDef) bool {
 	}
 
 	// Validate application definition
-	if benchmark.Application.Type == "" {
-		log.Logger().Errorf("wrong application type %v", benchmark.Application.Type)
-		return false
-	}
-	if benchmark.Application.Type != "unitfiles" || benchmark.Application.Type != "docker" || benchmark.Application.Type != "rkt" {
+	if benchmark.Application.Type != "" && benchmark.Application.Type != "unitfiles" && benchmark.Application.Type != "docker" && benchmark.Application.Type != "rkt" {
 		log.Logger().Errorf("wrong application type %v", benchmark.Application.Type)
 		return false
 	}

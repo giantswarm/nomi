@@ -86,7 +86,7 @@ instructions:
 
 ### Passing a string with the instructions via `--raw-instructions`
 
-The main difference is the input format, in which the instructions are entered. When using `--raw-instructions`, those are passed in a string fashion , e.g. `--raw-instructions="(sleep 1) (start 200 100) (stop-all)"`. Each parenthesis represents a single instruction that will be executed in sequence and following the inline order. Therefore, a sleep instruction will be followed by a start (with Max: 200 and Duration: 100) and stop operations.
+When using `--raw-instructions`, the instructions are passed in a string fashion and a default systemd unit is used as benchmark application. An example of `raw-instructions` could be `--raw-instructions="(sleep 1) (start 200 100) (stop-all)"`. Each parenthesis represents a single instruction that will be executed in sequence and following the inline order. Therefore, a sleep instruction will be followed by a start (with Max: 200 and Duration: 100) and stop operations.
 
 ## Running Nomi
 
