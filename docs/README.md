@@ -24,8 +24,8 @@ In the following, we detail the purpose of each of the elements that composes a 
 - `application`:
   - `name`: name to be used as prefix in our fleet units.
   - `unitfile-path`: path to the custom systemd unit to be used as benchmark application.
-  - `image`: specifies the [docker](https://github.com/docker/docker) image or url to a [rkt](https://github.com/coreos/rkt) container definition. If no container `image` is specified and `type` is `rkt|docker` a default standard image would be used (image or aci based in a simple Linux Alpine image).
-  - `type`: `rkt|docker|unitfiles` types used to specify whether a deployed application would be a [rkt](https://github.com/coreos/rkt), [docker](https://github.com/docker/docker) container or a custom systemd unit.
+  - `image`: specifies the [docker](https://github.com/docker/docker) image or a URL to a [rkt](https://github.com/coreos/rkt) container definition. If no container `image` is specified and `type` is `rkt|docker` a default standard image will be used (image or ACI based on a simple Linux Alpine image).
+  - `type`: `rkt|docker|unitfiles` types used to specify whether a deployed application should be a [rkt](https://github.com/coreos/rkt) container, [docker](https://github.com/docker/docker) container, or a custom systemd unit.
   - `network`: indicates the type of network to be used in our containers `host|none|default`, as analogous to the network types defined in [rkt](https://github.com/coreos/rkt) and [docker](https://github.com/docker/docker).
   - `volumes`: list of volumes to be defined in the container.
     - `source`: path of source of the volume on the host.
