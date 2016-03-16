@@ -7,14 +7,11 @@ Nomi is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet
 - `--addr`: address to listen events from the deployed units. This argument is **important** to allow units notify Nomi when they change their state. Nomi extracts the public CoreOS IP of the host machine automatically (from `/etc/environment`). Note that you should use this argument when using a different distro than CoreOS, a Docker container, or a different address to listen on. The `default` port to listen on is `40302`.
 - `--dump-json`: dump JSON collected metrics to stdout.
 - `--dump-html-tar`: dump tarred HTML stats to stdout.
-- `--benchmark-file`: YAML file with the actions to be triggered and the size of the instance groups.
-- `--raw-instructions`: benchmark raw instructions to be triggered, (requires the `--instancegroup-size` argument) and the size of the instance groups.
+- `--benchmark-file`: YAML file with a custom benchmark definition to be triggered.
+- `--raw-instructions`: benchmark raw instructions to be triggered, (requires the `--instancegroup-size` argument) and the size of the instance groups. This option will use a default systemd unit as predefined benchmark application.
 - `--instancegroup-size`: size of the instance group in terms of units, (only if you use `raw-instructions`).
 - `--generate-gnuplots`: generate gnuplots out of the collected metrics. It is preferable to use `raw-instructions` instead of `benchmark-file` to avoid specifying a docker volume to pass a YAML benchmark definition.
     - **Important:** You have to run Nomi as a Docker container in your CoreOS machine.
-- `unitfile-service`: fleet unit file of type service to be used as benchmark unit.
-- `use-docker`: use benchmark units that deploy [Docker](https://github.com/docker/docker) containers. If no container image and type is defined in `benchmark-file`, we deploy a standard container that use a simple Linux Alpine image.
-- `use-rkt`: use benchmark units that deploy [rkt](https://github.com/coreos/rkt) containers. If no container image and type is defined in `benchmark-file`, we deploy a standard aci which is based in a simple Linux Alpine image.
 
 ## Benchmark file definition
 
@@ -26,8 +23,9 @@ In the following, we detail the purpose of each of the elements that composes a 
 
 - `application`:
   - `name`: name to be used as prefix in our fleet units.
-  - `image`: specifies the [docker](https://github.com/docker/docker) image or url to a [rkt](https://github.com/coreos/rkt) container definition.
-  - `type`: used to specify whether a deployed container would be [rkt](https://github.com/coreos/rkt) or [docker](https://github.com/docker/docker).
+  - `unitfile-path`: path to the custom systemd unit to be used as benchmark application.
+  - `image`: specifies the [docker](https://github.com/docker/docker) image or a URL to a [rkt](https://github.com/coreos/rkt) container definition. If no container `image` is specified and `type` is `rkt|docker` a default standard image will be used (image or ACI based on a simple Linux Alpine image).
+  - `type`: `rkt|docker|unitfiles` types used to specify whether a deployed application should be a [rkt](https://github.com/coreos/rkt) container, [docker](https://github.com/docker/docker) container, or a custom systemd unit.
   - `network`: indicates the type of network to be used in our containers `host|none|default`, as analogous to the network types defined in [rkt](https://github.com/coreos/rkt) and [docker](https://github.com/docker/docker).
   - `volumes`: list of volumes to be defined in the container.
     - `source`: path of source of the volume on the host.
@@ -88,29 +86,19 @@ instructions:
 
 ### Passing a string with the instructions via `--raw-instructions`
 
-The main difference is the input format, in which the instructions are entered. When using `--raw-instructions`, those are passed in a string fashion , e.g. `--raw-instructions="(sleep 1) (start 200 100) (stop-all)"`. Each parenthesis represents a single instruction that will be executed in sequence and following the inline order. Therefore, a sleep instruction will be followed by a start (with Max: 200 and Duration: 100) and stop operations.
+When using `--raw-instructions`, the instructions are passed in a string fashion and a default systemd unit is used as benchmark application. An example of `raw-instructions` could be `--raw-instructions="(sleep 1) (start 200 100) (stop-all)"`. Each parenthesis represents a single instruction that will be executed in sequence and following the inline order. Therefore, a sleep instruction will be followed by a start (with Max: 200 and Duration: 100) and stop operations.
 
 ## Running Nomi
 
 ### Executing the Nomi binary
 
-Using a benchmark YAML file to run a test that deploys rkt containers:
+Using a benchmark YAML file to run a test that deploys a custom rkt container:
 
 ```nohighlight
 $ nomi run \
     --instancegroup-size=1 \
     --dump-json \
-    --benchmark-file="./examples/sample01.yaml" \
-    --use-rkt
-```
-
-Using a benchmark YAML file to run a custom rkt container:
-
-```nohighlight
-$ nomi run \
-     --instancegroup-size=1 \
-     --dump-json \
-     --benchmark-file="./examples/benchmarkDefRkt.yaml"
+    --benchmark-file="./examples/benchmarkDefRkt.yaml"
 ```
 
 Using a benchmark that uses a custom fleet unit service's file:
@@ -118,8 +106,7 @@ Using a benchmark that uses a custom fleet unit service's file:
 ```nohighlight
 $ nomi run \
     --dump-json \
-    --benchmark-file="./examples/benchmarkDef01.yaml" \
-    --unitfile-service=./examples/benchmarkDefUnitFile.service
+    --benchmark-file="./examples/benchmarkDefUnitFile.yaml"
 ```
 
 Using `--raw-instructions` and `--instancegroup-size` arguments to run a benchmark that deploys raw systemd units:
@@ -139,7 +126,6 @@ $ ./nomi run \
     --instancegroup-size=1 \
     --dump-json \
     --benchmark-file="./examples/sample01.yaml" \
-    --use-rkt
 ```
 
 ### Running Nomi remotely

@@ -10,13 +10,13 @@ import (
 func TestBuilder(t *testing.T) {
 	// check basic configuration
 	app := definition.Application{}
-	builder, err := NewBuilder(app, 1, "127.0.0.1:54541", false, false)
+	builder, err := NewBuilder(app, 1, "127.0.0.1:54541")
 	if err != nil {
 		log.Fatal(err)
 	}
 	units1 := builder.MakeUnitChain("1")
-	if units1[0].Name != "beaconX-0@1.service" {
-		log.Fatalf("wrong unit name expected 'beaconX-0@1.service' got: %s", units1[0].Name)
+	if units1[0].Name != "nomi-0@1.service" {
+		log.Fatalf("wrong unit name expected 'nomi-0@1.service' got: %s", units1[0].Name)
 	}
 	options1 := units1[0].Options
 	if options1[1].Name != "ExecStart" && options1[1].Value != "/bin/sh -c 'sleep 90000'" {
@@ -24,10 +24,11 @@ func TestBuilder(t *testing.T) {
 	}
 
 	// check Docker configuration
-	builder, err = NewBuilder(app, 1, "127.0.0.1:54541", true, false)
+	app = definition.Application{Type: "docker"}
+	builder, err = NewBuilder(app, 1, "127.0.0.1:54541")
 	units2 := builder.MakeUnitChain("1")
-	if units2[0].Name != "beaconX-0@1.service" {
-		log.Fatalf("wrong unit name expected 'beaconX-0@1.service' got: %s", units2[0].Name)
+	if units2[0].Name != "nomi-0@1.service" {
+		log.Fatalf("wrong unit name expected 'nomi-0@1.service' got: %s", units2[0].Name)
 	}
 	options2 := units2[0].Options
 	if options2[1].Name != "ExecStartPre" && options2[1].Value != "-/bin/bash -c '/usr/bin/docker rm -f %p-%i'" {
@@ -35,10 +36,11 @@ func TestBuilder(t *testing.T) {
 	}
 
 	// check rkt configuration
-	builder, err = NewBuilder(app, 1, "127.0.0.1:54541", false, true)
+	app = definition.Application{Type: "rkt"}
+	builder, err = NewBuilder(app, 1, "127.0.0.1:54541")
 	units3 := builder.MakeUnitChain("1")
-	if units3[0].Name != "beaconX-0@1.service" {
-		log.Fatalf("wrong unit name expected 'beaconX-0@1.service' got: %s", units3[0].Name)
+	if units3[0].Name != "nomi-0@1.service" {
+		log.Fatalf("wrong unit name expected 'nomi-0@1.service' got: %s", units3[0].Name)
 	}
 	options3 := units3[0].Options
 	if options3[3].Name != "KillMode" && options3[3].Value != "Mixed" {

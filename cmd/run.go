@@ -29,14 +29,19 @@ type runCmdFlags struct {
 	generatePlots   bool
 	igSize          int
 	verbose         bool
-	useDocker       bool
-	useRkt          bool
 	unitFile        string
 }
 
 func (f runCmdFlags) Validate() {
 	if f.dumpJSONFlag && f.dumpHTMLTarFlag {
 		log.Logger().Fatal("dump option is required. Please, choose between:  dump-json OR dump-html-tar")
+	}
+
+	if f.generatePlots {
+		if _, err := exec.LookPath("gnuplot"); err != nil {
+			log.Logger().Infof("generate-gnuplots: could not find path to 'gnuplot':\n%v\n", err)
+			log.Logger().Fatal("generate-gnuplots option requires 'gnuplot' software installed")
+		}
 	}
 
 	if f.benchmarkFile == "" && f.rawInstructions == "" {
@@ -51,12 +56,6 @@ func (f runCmdFlags) Validate() {
 		log.Logger().Fatal("instance group size has to be greater than 0 when using raw-instructions parameter")
 	}
 
-	if f.generatePlots {
-		if _, err := exec.LookPath("gnuplot"); err != nil {
-			log.Logger().Infof("generate-gnuplots: could not find path to 'gnuplot':\n%v\n", err)
-			log.Logger().Fatal("generate-gnuplots option requires 'gnuplot' software installed")
-		}
-	}
 }
 
 var (
@@ -72,15 +71,12 @@ var (
 
 func init() {
 	runCmd.Flags().StringVar(&runFlags.listenAddr, "addr", "", "address to listen")
-	runCmd.Flags().StringVar(&runFlags.benchmarkFile, "benchmark-file", "", "file with the benchmark definition (instance group size, instructions to spawn/stop/float units)")
+	runCmd.Flags().StringVar(&runFlags.benchmarkFile, "benchmark-file", "", "file with the benchmark definition (application definition, instance group size, instructions to spawn/stop/float units)")
 	runCmd.Flags().StringVar(&runFlags.rawInstructions, "raw-instructions", "", "instructions to spawn/stop/float units")
 	runCmd.Flags().BoolVar(&runFlags.dumpJSONFlag, "dump-json", false, "dump json stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.dumpHTMLTarFlag, "dump-html-tar", false, "dump tarred html stats to stdout")
 	runCmd.Flags().BoolVar(&runFlags.verbose, "verbose", false, "verbose output")
-	runCmd.Flags().BoolVar(&runFlags.useDocker, "use-docker", false, "use systemd units that deploy docker containers")
-	runCmd.Flags().BoolVar(&runFlags.useRkt, "use-rkt", false, "use systemd units that deploy rkt containers")
-	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using GNUPLOT (output directory=/nomi_plots)")
-	runCmd.Flags().StringVar(&runFlags.unitFile, "unitfile-service", "", "fleet unit file to create a fleet service")
+	runCmd.Flags().BoolVar(&runFlags.generatePlots, "generate-gnuplots", false, "generate plots using gnuplot (output directory=/nomi_plots)")
 	runCmd.Flags().IntVar(&runFlags.igSize, "instancegroup-size", 1, "instance group size")
 }
 
@@ -112,6 +108,7 @@ func runRun(cmd *cobra.Command, args []string) {
 	} else {
 		benchmark, err = definition.BenchmarkDefByFile(runFlags.benchmarkFile)
 	}
+
 	if err != nil {
 		log.Logger().Fatal(err)
 	}
@@ -121,15 +118,15 @@ func runRun(cmd *cobra.Command, args []string) {
 		log.Logger().Fatal(err)
 	}
 
-	builder, err := unit.NewBuilder(benchmark.Application, unitEngine.InstanceGroupSize(), runFlags.listenAddr, runFlags.useDocker, runFlags.useRkt)
+	builder, err := unit.NewBuilder(benchmark.Application, unitEngine.InstanceGroupSize(), runFlags.listenAddr)
 	if err != nil {
 		log.Logger().Fatal(err)
 	}
 
-	if runFlags.unitFile != "" {
-		err = builder.UseCustomUnitFileService(runFlags.unitFile)
+	if benchmark.Application.Type == "unitfiles" {
+		err = builder.UseCustomUnitFileService(benchmark.Application.UnitFilePath)
 		if err != nil {
-			log.Logger().Fatal("unable to parse unit file in unitfile-service")
+			log.Logger().Fatal("unable to parse unit file from your application definition")
 		}
 	}
 

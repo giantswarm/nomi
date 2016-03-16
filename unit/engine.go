@@ -274,7 +274,7 @@ func (e *UnitEngine) stopUnit(id string, state UnitState) {
 	newState.stopRequestTime = time.Now()
 
 	if Verbose {
-		log.Logger().Infof("marking beacon as to be deleted: %s", id)
+		log.Logger().Infof("marking unit as to be deleted: %s", id)
 	}
 	e.stoppingUnits[id] = newState
 	e.mu.Unlock()
