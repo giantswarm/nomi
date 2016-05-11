@@ -49,7 +49,7 @@ func (b *Builder) GetUnitPrefix() string {
 	return prefix
 }
 
-// MakeStatsDumper creates fleemer specific units to collect metrics in each host
+// MakeStatsDumper creates nomi specific units to collect metrics in each host
 func (b *Builder) MakeStatsDumper(name, cmd, statsEndpoint string) schema.Unit {
 	prefix := nomiUnitPrefix
 	if b.app.Name != "" {

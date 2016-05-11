@@ -6,7 +6,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/giantswarm/nomi)](https://goreportcard.com/report/github.com/giantswarm/nomi)
 [![IRC Channel](https://img.shields.io/badge/irc-%23giantswarm-blue.svg)](https://kiwiirc.com/client/irc.freenode.net/#giantswarm)
 
-**Nomi** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. With Nomi, you can deploy benchmark units that employ [Docker](https://github.com/docker/docker), [rkt](https://github.com/coreos/rkt) containers, or just raw `systemd` units. Fleemer is able to collect some metrics and generate some plots from those. To make use of Nomi, you just need to define your own benchmark using a YAML file. Nomi parses this file and runs the benchmark according to the instructions defined in it. Additionally, Nomi provides the possibility to define instructions in one line using the parameter `raw-instructions`.
+**Nomi** is a benchmarking tool that tests a [fleet](https://github.com/coreos/fleet) cluster. With Nomi, you can deploy benchmark units that employ [Docker](https://github.com/docker/docker), [rkt](https://github.com/coreos/rkt) containers, or just raw `systemd` units. Nomi is able to collect some metrics and generate some plots from those. To make use of Nomi, you just need to define your own benchmark using a YAML file. Nomi parses this file and runs the benchmark according to the instructions defined in it. Additionally, Nomi provides the possibility to define instructions in one line using the parameter `raw-instructions`.
 
 ## Requirements
 
