@@ -69,7 +69,7 @@ $(BIN): $(SOURCE) VERSION output/gobindata.go
 		    -e GOOS=$(GOOS) \
 		    -e GOARCH=$(GOARCH) \
 		    -w /usr/code \
-		    golang:1.5.3 \
+		    golang:1.6.1 \
 		    go build -a -ldflags "-X $(IMPORT_PATH)/cmd.ProjectVersion=$(VERSION) -X $(IMPORT_PATH)/cmd.ProjectBuild=$(COMMIT)" -o $(BIN)
 
 
@@ -85,7 +85,7 @@ test: get-deps
 		-e GOARCH=$(GOARCH) \
 		-e GO15VENDOREXPERIMENT=1 \
 		-w /usr/code/ \
-	golang:1.5.3 \
+	golang:1.6.1 \
 		bash -c 'cd .gobuild/src/github.com/$(ORGANIZATION)/$(PROJECT) && go test $$(go list ./... | grep -v "gopath")'
 
 lint:
@@ -104,7 +104,7 @@ godoc: all
 	    -e GO15VENDOREXPERIMENT=1 \
 	    -w /usr/code \
       -p 6060:6060 \
-		golang:1.5 \
+		golang:1.6.1 \
 		godoc -http=:6060
 
 fmt:
