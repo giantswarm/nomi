@@ -68,11 +68,21 @@ func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirecto
 			panic(err_string)
 		}
 		defer p.Close()
+
 		for hostname, metrics := range stats.MachineStats {
+			f, err1 := os.Create(fmt.Sprintf("%s/%s-%s.dat", plotsDirectory, process, hostname))
+			if err1 != nil {
+				err_string := fmt.Sprintf("** err: %v\n", err1)
+				panic(err_string)
+			}
+			defer f.Close()
+
 			valuesX := make([]float64, 0)
 			valuesY := make([]float64, 0)
 			for _, metric := range metrics {
 				if metric.Process == process {
+					f.WriteString(fmt.Sprintf("%v %v\n", metric.TimeStamp, metric.CPUUsage))
+
 					valuesX = append(valuesX, metric.TimeStamp)
 					valuesY = append(valuesY, metric.CPUUsage)
 				}
@@ -80,6 +90,7 @@ func generateDelayStartPlot(fname string, persist bool, debug bool, plotsDirecto
 			if debug {
 				log.Logger().Infof("Plotting data for %s", hostname)
 			}
+			f.Sync()
 			p.PlotXY(valuesX, valuesY, fmt.Sprintf("%s - Time/CPU", hostname), "")
 		}
 		p.SetXLabel("Timestamp (secs)")
@@ -106,15 +117,26 @@ func generateUnitsStartPlot(fname string, persist bool, debug bool, plotsDirecto
 	}
 	defer p.Close()
 
+	f, err1 := os.Create(fmt.Sprintf("%s/units_start.dat", plotsDirectory))
+	if err1 != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err1)
+		panic(err_string)
+	}
+	defer f.Close()
+
 	valuesX := make([]float64, 0)
 	valuesY := make([]float64, 0)
 	p.CheckedCmd("set grid x")
 	p.CheckedCmd("set grid y")
 	p.SetStyle("impulses")
 	for _, stats := range stats.Start {
+		f.WriteString(fmt.Sprintf("%v %v\n", stats.CompletionTime, stats.Delay))
+
 		valuesX = append(valuesX, stats.CompletionTime)
 		valuesY = append(valuesY, stats.Delay)
 	}
+	f.Sync()
+
 	p.PlotXY(valuesX, valuesY, "Start operation Completion/Delay seconds", "")
 	p.SetXLabel("Completion time (secs)")
 	p.SetYLabel("Delay time (secs)")
@@ -135,6 +157,13 @@ func generateUnitsStopPlot(fname string, persist bool, debug bool, plotsDirector
 	}
 	defer p.Close()
 
+	f, err1 := os.Create(fmt.Sprintf("%s/units_stop.dat", plotsDirectory))
+	if err1 != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err1)
+		panic(err_string)
+	}
+	defer f.Close()
+
 	valuesX := make([]float64, 0)
 	valuesY := make([]float64, 0)
 	p.CheckedCmd("set grid x")
@@ -146,9 +175,13 @@ func generateUnitsStopPlot(fname string, persist bool, debug bool, plotsDirector
 	p.CheckedCmd(fmt.Sprintf("set output '%s/units_stop.pdf'", plotsDirectory))
 
 	for _, stats := range stats.Stop {
+		f.WriteString(fmt.Sprintf("%v %v\n", stats.CompletionTime, stats.Delay))
+
 		valuesX = append(valuesX, stats.CompletionTime)
 		valuesY = append(valuesY, stats.Delay)
 	}
+	f.Sync()
+
 	p.PlotXY(valuesX, valuesY, "Stop operation Completion/Delay seconds", "")
 	p.CheckedCmd("replot")
 
@@ -164,6 +197,13 @@ func generateUnitsStartCountPlot(fname string, persist bool, debug bool, plotsDi
 	}
 	defer p.Close()
 
+	f, err1 := os.Create(fmt.Sprintf("%s/units_start_count.dat", plotsDirectory))
+	if err1 != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err1)
+		panic(err_string)
+	}
+	defer f.Close()
+
 	valuesX1 := make([]float64, 0)
 	valuesY1 := make([]float64, 0)
 	valuesX2 := make([]float64, 0)
@@ -171,11 +211,14 @@ func generateUnitsStartCountPlot(fname string, persist bool, debug bool, plotsDi
 
 	p.SetStyle("lines")
 	for _, stats := range stats.Start {
+		f.WriteString(fmt.Sprintf("%v %v %v %v\n", stats.StartTime, float64(stats.StartingCount), stats.CompletionTime, float64(stats.RunningCount)))
+
 		valuesX1 = append(valuesX1, stats.StartTime)
 		valuesY1 = append(valuesY1, float64(stats.StartingCount))
 		valuesX2 = append(valuesX2, stats.CompletionTime)
 		valuesY2 = append(valuesY2, float64(stats.RunningCount))
 	}
+	f.Sync()
 
 	p.SetStyle("boxes")
 	p.PlotXY(valuesX1, valuesY1, "Starting", "")
@@ -200,6 +243,14 @@ func generateUnitsStopCountPlot(fname string, persist bool, debug bool, plotsDir
 	}
 	defer p.Close()
 
+	f, err1 := os.Create(fmt.Sprintf("%s/units_stop_count.dat", plotsDirectory))
+	if err1 != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err1)
+		panic(err_string)
+	}
+
+	defer f.Close()
+
 	valuesX1 := make([]float64, 0)
 	valuesY1 := make([]float64, 0)
 	valuesX2 := make([]float64, 0)
@@ -207,11 +258,14 @@ func generateUnitsStopCountPlot(fname string, persist bool, debug bool, plotsDir
 
 	p.SetStyle("lines")
 	for _, stats := range stats.Stop {
+		f.WriteString(fmt.Sprintf("%v %v %v %v\n", stats.StartTime, float64(stats.StoppingCount), stats.CompletionTime, float64(stats.StoppedCount)))
+
 		valuesX1 = append(valuesX1, stats.StartTime)
 		valuesY1 = append(valuesY1, float64(stats.StoppingCount))
 		valuesX2 = append(valuesX2, stats.CompletionTime)
 		valuesY2 = append(valuesY2, float64(stats.StoppedCount))
 	}
+	f.Sync()
 
 	p.PlotXY(valuesX1, valuesY1, "Stopping", "")
 	p.PlotXY(valuesX2, valuesY2, "Stopped", "")
@@ -234,6 +288,14 @@ func generateUnitsStartMultiPlot(fname string, persist bool, debug bool, plotsDi
 	}
 	defer p.Close()
 
+	f, err1 := os.Create(fmt.Sprintf("%s/units_start_multi.dat", plotsDirectory))
+	if err1 != nil {
+		err_string := fmt.Sprintf("** err: %v\n", err1)
+		panic(err_string)
+	}
+
+	defer f.Close()
+
 	valuesX := make([]float64, 0)
 	valuesY := make([]float64, 0)
 	valuesY2 := make([]float64, 0)
@@ -246,10 +308,14 @@ func generateUnitsStartMultiPlot(fname string, persist bool, debug bool, plotsDi
 	p.CheckedCmd("set y2tics")
 	p.SetStyle("dots")
 	for _, stats := range stats.Start {
+		f.WriteString(fmt.Sprintf("%v %v %v\n", stats.CompletionTime, stats.Delay, float64(stats.RunningCount)))
+
 		valuesX = append(valuesX, stats.CompletionTime)
 		valuesY = append(valuesY, stats.Delay)
 		valuesY2 = append(valuesY2, float64(stats.RunningCount))
 	}
+	f.Sync()
+
 	p.PlotXY(valuesX, valuesY, "Start Completion/Delay secs/Units", "axes x1y1")
 	p.SetStyle("lines")
 	p.PlotXY(valuesX, valuesY2, "Running units", "axes x1y2")
