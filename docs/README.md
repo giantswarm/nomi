@@ -149,7 +149,7 @@ $ docker run -ti \
     --net=host \
     --pid=host \
     giantswarm/nomi:latest run \
-    --addr=192.68.10.101:54541 \
+    --addr=192.168.10.101:54541 \
     --generate-gnuplots \
     --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
 ```
@@ -196,8 +196,8 @@ $ docker run -ti \
   --net=host \
   --pid=host \
   giantswarm/nomi:latest run \
-  --addr=192.68.10.101:54541 \
-  --generate-plots \
+  --addr=192.168.10.101:54541 \
+  --generate-gnuplots \
   --raw-instructions="(sleep 1) (start 10 100) (sleep 60) (stop-all)"
 ```
 

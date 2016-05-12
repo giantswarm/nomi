@@ -6,7 +6,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("fleemer")
+var log = logging.MustGetLogger("nomi")
 
 func init() {
 	format := logging.MustStringFormatter(
